@@ -329,4 +329,18 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
             ->setBody($json);
     }
 
+    /**
+     * To delete wallet profile
+     */
+    public function deletewalletAction() {
+
+        $walletid = $this->getRequest()->getParam('cc_id');
+        $customerId = $this->getRequest()->getParam('customerId');
+
+        $response = Mage::getModel('ccgateway/standard')->deleteWalletDataService($walletid, $customerId);
+
+        echo $response;
+        exit;
+    }
+
 }

@@ -215,7 +215,7 @@ function valid_credit_card(value, isTestMode)
     else {
         document.getElementById("testError").style.display = "block";
         document.getElementById("testError").innerHTML = "Please Enter valid card data.";
-        //document.getElementById("ccgateway_cc_number_org").value = "";
+        document.getElementById("ccgateway_cc_number_org").value = "";
         document.getElementById("ccgateway_cc_number_org").focus();
         stopLoading();
         return false;

@@ -870,15 +870,17 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
 
 // Function for Delete Profile webservices
 
-    function deleteWalletDataService($profileRowId) {
+    function deleteWalletDataService($profileRowId, $ccUserId= "") {
 
         $username = $this->getConfigData('username');
         $merchid = $this->getConfigData('merchant');
         $cc_password = $this->getConfigData('password');
 
-        if (Mage::getSingleton('customer/session')->isLoggedIn()) {
-            $customerData = Mage::getSingleton('customer/session')->getCustomer();
-            $ccUserId = $customerData->getId();
+        if(empty($ccUserId)){
+            if (Mage::getSingleton('customer/session')->isLoggedIn()) {
+                $customerData = Mage::getSingleton('customer/session')->getCustomer();
+                $ccUserId = $customerData->getId();
+            }
         }
 
         $collection = Mage::getModel('cardconnect_ccgateway/cardconnect_wallet')->getCollection()
@@ -901,7 +903,6 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
 
                 if (($response['resptext'] === "Profile Deleted")  || ($response['resptext'] === "Profile not found")) {
                     $resource = Mage::getSingleton('core/resource');
-                    $readConnection = $resource->getConnection('core_read');
                     $writeConnection = $resource->getConnection('core_write');
 
                     $getTable = $resource->getTableName('cardconnect_wallet');
@@ -921,6 +922,10 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
                 Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
                 $msg = "We are unable to perform the requested action, please contact customer service.";
             }
+        }else{
+            $myLogMessage = "CC Delete Profile Service : ". __FILE__ . " @ " . __LINE__;
+            Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
+            $msg = "We are unable to perform the requested action, please contact customer service.";
         }
 
         return $msg;

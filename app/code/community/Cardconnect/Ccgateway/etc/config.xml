@@ -35,7 +35,7 @@ to license@magentocommerce.com so we can send you a copy immediately.
 <config>
     <modules>
         <Cardconnect_Ccgateway>
-            <version>1.0.4</version>
+            <version>1.0.5</version>
         </Cardconnect_Ccgateway>
     </modules>
     <global>
