@@ -38,25 +38,25 @@
     #t_content_row{
         text-align: left;
     }
-    #t_content_row td{        
+    #t_content_row td{
         padding-left: 10px;
     }
     #text_link{
         color:#3399CC;
         cursor: pointer;
     }
-    #text_link:hover{        
+    #text_link:hover{
         text-decoration: underline;
     }
-	
+
 #fade{ width:100%; height:100%; background:rgba(0,0,0,0.1); position:fixed; top:0px; left:0px; display:none;}
-.loader{position:absolute; top:80%; left:50%;}	
+.loader{position:absolute; top:80%; left:50%;}
 </style>
 
 
 <script>
     function makeDefaultPayment(defaultId, value, id) {
- 
+
         var loadurl = '<?php echo Mage::getUrl('ccgateway/cardmanagement/makedefaultpayment',array('_secure'=>true)); ?>';
         //Element.show('loadingmask');
         new Ajax.Request(loadurl, {
@@ -72,22 +72,22 @@
         });
     }
 
-	
-	
+
+
     function confirm_del(delId) {
 
         var loc = document.getElementById('cardListGrid');
         var conf = confirm("Are you sure to delete this?");
         if (conf == true) {
             var loadurl = '<?php echo Mage::getUrl('ccgateway/cardmanagement/deletewallet',array('_secure'=>true)); ?>';
-            
+
             new Ajax.Request(loadurl, {
 				onCreate : startLoading,
                 method: 'post',
                 parameters: "cc_id=" + delId,
                 onComplete: function (transport) {
                     alert(transport.responseText); //return false;
-					stopLoading();					
+					stopLoading();
                     document.getElementById('success-msg').style.display = "";
                     $('success-msg').innerHTML = transport.responseText;
                     window.location.reload();
@@ -109,19 +109,19 @@
   document.getElementById('fade').style.display ="block";
     var el = document.getElementById("loading_box");
     if (el && !loaded) {
-		
+
         el.innerHTML = '<img src="<?php echo $this->getSkinUrl('images/opc-ajax-loader.gif'); ?>" alt="Loading...">';
         new Effect.Appear('loading_box');
     }
-  } 
-  
+  }
+
 	function stopLoading() {
 	document.getElementById('fade').style.display ="none";
 		Element.hide('loading_box');
 		loaded = true;
-	} 
+	}
 
-	
+
 
 </script>
 
@@ -167,7 +167,7 @@
                     <td>
                         <a href="<?php echo $this->getEditUrl() . "?cardid=" . $data['CC_ID'] . "&pid=" . $data['CC_PROFILEID']; ?>">Edit</a>&nbsp;&nbsp;
 						<span id="text_link"  <?php if ($data['CC_DEFAULT_CARD'] == 'Y' && count($walletProfile) !=1) { ?> style="display:none;" <?php } ?>  onclick="confirm_del(<?php echo $data['CC_ID']; ?>);">Delete</span>
-                        
+
 					</td>
                     <td><input type="radio" name="defaultPaymentCard" id="defaultPaymentCard_<?php echo $i; ?>" onclick="javascript:makeDefaultPayment(this.id, this.value, <?php echo $data['CC_ID']; ?>);" <?php if ($data['CC_DEFAULT_CARD'] == 'Y') { ?> checked="checked" <?php } ?>value="<?php echo $data['CC_DEFAULT_CARD']; ?>" /> <?php // echo $data['CC_PROFILEID'];  ?></td>
                 </tr>
@@ -179,7 +179,7 @@
                 <div>
                     <strong>No Card Found.</strong>
                 </div>
-                
+
      <?php } ?>
     </table>
 </div>

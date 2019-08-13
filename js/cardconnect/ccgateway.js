@@ -9,7 +9,7 @@
  * @version $Id: $
  *
  **/
- 
+
 /**
 Magento
 *
@@ -170,6 +170,7 @@ function parseXml(xmlStr) {
 
 function valid_credit_card(value, isTestMode)
 {
+    startLoading();
 
     document.getElementById("ccgateway_expiration").disabled = true;
     document.getElementById("ccgateway_expiration_yr").disabled = true;
@@ -203,10 +204,12 @@ function valid_credit_card(value, isTestMode)
         var selectedCardType = e.options[e.selectedIndex].value;
         if (cardType == selectedCardType && selectedCardType != null ) {
             tokenize(cardNum , isTestMode);
+            setTimeout(stopLoading, 1000);
         } else {
             alert("Entered card information mismatched. Please try again.");
             document.getElementById("ccgateway_cc_number_org").value = "";
             document.getElementById("ccgateway_cc_number_org").focus();
+            stopLoading();
         }
         return;
     }
@@ -214,6 +217,7 @@ function valid_credit_card(value, isTestMode)
         alert("Please Enter valid card data.");
         document.getElementById("ccgateway_cc_number_org").value = "";
         document.getElementById("ccgateway_cc_number_org").focus();
+        stopLoading();
         return false;
     }
 
@@ -286,7 +290,7 @@ function blockNonNumbers(obj, e, allowDecimal, allowNegative) {
 
     keychar = String.fromCharCode(key);
     // check for backspace or delete, or if Ctrl was pressed
-    
+
     if (key == 8 || isCtrl) {
         return true;
     }
@@ -300,9 +304,9 @@ function blockNonNumbers(obj, e, allowDecimal, allowNegative) {
 
 
 function showAliseField(){
-    
+
     if( document.getElementById("ccgateway_cc_wallet").checked == true){
-      document.getElementById("save_card").show();  
+        document.getElementById("save_card").show();
     }else{
         document.getElementById("save_card").hide();
     }
@@ -315,7 +319,7 @@ function callGetProfileWebserviceController( requestUrl, profile ){
 //alert(profile);
 
     if((profile != "Checkout with new card")){
-        
+
         document.getElementById("ccgateway_cc_owner").readOnly = true;
         document.getElementById("ccgateway_cc_number_org").readOnly = true;
         document.getElementById("ccgateway_cc_number").readOnly = true;
@@ -323,9 +327,9 @@ function callGetProfileWebserviceController( requestUrl, profile ){
         document.getElementById("ccgateway_expiration").readOnly = true;
         document.getElementById("ccgateway_expiration_yr").readOnly = true;
         document.getElementById("ccgateway_cc_cid").readOnly = false;
-        document.getElementById("ccgateway_cc_wallet").disabled = true;        
+        document.getElementById("ccgateway_cc_wallet").disabled = true;
         new Ajax.Request(requestUrl, {
-		
+
             method: 'Post',
             parameters: {profile: profile},
             requestHeaders: {Accept: 'application/json'},
@@ -348,14 +352,14 @@ function callGetProfileWebserviceController( requestUrl, profile ){
                 document.getElementById("ccgateway_expiration").value = month;
                 document.getElementById("ccgateway_expiration_yr").value = "20"+year;
                 document.getElementById("ccgateway_cc_cid").value = "";
-                document.getElementById("save_card_4future").hide(); 
+                document.getElementById("save_card_4future").hide();
                 document.getElementById("payment_info").hide();
                 document.getElementById("payment_info1").hide();
 
             }
         });
     }else{
-        
+
             document.getElementById("ccgateway_cc_owner").readOnly = false;
             document.getElementById("ccgateway_cc_number_org").readOnly = false;
             document.getElementById("ccgateway_cc_number").readOnly = false;
@@ -364,7 +368,7 @@ function callGetProfileWebserviceController( requestUrl, profile ){
             document.getElementById("ccgateway_expiration_yr").readOnly = false;
             document.getElementById("ccgateway_cc_cid").readOnly = false;
             document.getElementById("ccgateway_cc_wallet").disabled = false;
-            
+
             document.getElementById("ccgateway_cc_owner").value = "";
             document.getElementById("ccgateway_cc_number_org").value = "";
             document.getElementById("ccgateway_cc_number").value = "";
@@ -372,9 +376,9 @@ function callGetProfileWebserviceController( requestUrl, profile ){
             document.getElementById("ccgateway_expiration").value = "";
             document.getElementById("ccgateway_expiration_yr").value = "";
             document.getElementById("ccgateway_cc_cid").value = "";
-            document.getElementById("save_card_4future").show();  
-            document.getElementById("payment_info").show(); 
-            document.getElementById("payment_info1").show(); 
+            document.getElementById("save_card_4future").show();
+            document.getElementById("payment_info").show();
+            document.getElementById("payment_info1").show();
 
     }
 
@@ -402,3 +406,24 @@ function showDefaultAddress(billingStreet,billingCity,billingRegion,billingCount
 
 }
 
+
+var loaded = false;
+function startLoading() {
+    loaded = false;
+    showLoadingImage();
+}
+
+function showLoadingImage() {
+    document.getElementById("fade").style.display = "block";
+    var el = document.getElementById("loading_box");
+    if (el && !loaded) {
+        el.innerHTML = '<img src="" alt="Loading...">';
+        new Effect.Appear('loading_box');
+    }
+}
+
+function stopLoading() {
+    Element.hide('fade');
+    loaded = true;
+    document.getElementById("fade").style.display = "none";
+}

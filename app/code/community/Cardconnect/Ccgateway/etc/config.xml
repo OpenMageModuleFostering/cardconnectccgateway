@@ -128,7 +128,118 @@ to license@magentocommerce.com so we can send you a copy immediately.
 				</observers>
 			</controller_action_postdispatch_checkout_onepage_savePayment>	
 		</events>
-    </global>
+
+		<sales>
+			<order>
+				<statuses>
+					<cardconnect_processing>
+						<label>CardConnect Processing</label>
+						<description>CardConnect Processing</description>
+					</cardconnect_processing>
+				</statuses>
+				<states>
+					<cardconnect_processing>
+						<statuses>
+							<cardconnect_processing/>
+						</statuses>
+						<visible_on_front>1</visible_on_front>
+					</cardconnect_processing>
+					<processing>
+						<statuses>
+							<cardconnect_processing/>
+						</statuses>
+						<visible_on_front>1</visible_on_front>
+					</processing>
+				</states>
+
+                <statuses>
+                    <cardconnect_capture>
+                        <label>CardConnect Capture</label>
+                        <description>CardConnect Capture</description>
+                    </cardconnect_capture>
+                </statuses>
+                <states>
+                    <cardconnect_capture>
+                        <statuses>
+                            <cardconnect_capture/>
+                        </statuses>
+                        <visible_on_front>1</visible_on_front>
+                    </cardconnect_capture>
+                    <pending_payment>
+                        <statuses>
+                            <cardconnect_capture/>
+                        </statuses>
+                        <visible_on_front>1</visible_on_front>
+                    </pending_payment>
+                </states>
+
+                <statuses>
+                    <cardconnect_void>
+                        <label>CardConnect Void</label>
+                        <description>CardConnect Void</description>
+                    </cardconnect_void>
+                </statuses>
+                <states>
+                    <cardconnect_void>
+                        <statuses>
+                            <cardconnect_void/>
+                        </statuses>
+                        <visible_on_front>1</visible_on_front>
+                    </cardconnect_void>
+                    <canceled>
+                        <statuses>
+                            <cardconnect_void/>
+                        </statuses>
+                        <visible_on_front>1</visible_on_front>
+                    </canceled>
+                </states>
+
+                <statuses>
+                    <cardconnect_reject>
+                        <label>CardConnect Rejected</label>
+                        <description>CardConnect Rejected</description>
+                    </cardconnect_reject>
+                </statuses>
+                <states>
+                    <cardconnect_reject>
+                        <statuses>
+                            <cardconnect_reject/>
+                        </statuses>
+                        <visible_on_front>1</visible_on_front>
+                    </cardconnect_reject>
+                    <canceled>
+                        <statuses>
+                            <cardconnect_reject/>
+                        </statuses>
+                        <visible_on_front>1</visible_on_front>
+                    </canceled>
+                </states>
+
+                <statuses>
+                    <cardconnect_txn_settled>
+                        <label>CardConnect Txn Settled</label>
+                        <description>CardConnect Txn Settled</description>
+                    </cardconnect_txn_settled>
+                </statuses>
+                <states>
+                    <cardconnect_txn_settled>
+                        <statuses>
+                            <cardconnect_txn_settled/>
+                        </statuses>
+                        <visible_on_front>1</visible_on_front>
+                    </cardconnect_txn_settled>
+                    <complete>
+                        <statuses>
+                            <cardconnect_txn_settled/>
+                        </statuses>
+                        <visible_on_front>1</visible_on_front>
+                    </complete>
+                </states>
+
+			</order>
+		</sales>		
+
+	</global>
     <default>
         <payment>
             <ccgateway>

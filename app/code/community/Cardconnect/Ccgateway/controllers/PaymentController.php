@@ -13,22 +13,22 @@
  * */
 
 /**
-  Magento
+Magento
  *
-  NOTICE OF LICENSE
+NOTICE OF LICENSE
  *
-  This source file is subject to the Open Software License (OSL 3.0)
-  that is bundled with this package in the file LICENSE.txt.
-  It is also available through the world-wide-web at this URL:
-  http://opensource.org/licenses/osl-3.0.php
-  If you did not receive a copy of the license and are unable to
-  obtain it through the world-wide-web, please send an email
-  to license@magentocommerce.com so we can send you a copy immediately.
+This source file is subject to the Open Software License (OSL 3.0)
+that is bundled with this package in the file LICENSE.txt.
+It is also available through the world-wide-web at this URL:
+http://opensource.org/licenses/osl-3.0.php
+If you did not receive a copy of the license and are unable to
+obtain it through the world-wide-web, please send an email
+to license@magentocommerce.com so we can send you a copy immediately.
  *
-  @category Cardconnect
-  @package Cardconnect_Ccgateway
-  @copyright Copyright (c) 2014 CardConnect (http://www.cardconnect.com)
-  @license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+@category Cardconnect
+@package Cardconnect_Ccgateway
+@copyright Copyright (c) 2014 CardConnect (http://www.cardconnect.com)
+@license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  */
 class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front_Action {
 
@@ -70,16 +70,16 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
 
             if ($checkoutType == "tokenized_post") {
                 $response = Mage::getModel('ccgateway/standard')->authService($order);
-				
-				if($response['resptext']=="CardConnect_Error"){
-					$errorMsg = "We are unable to perform the requested action, please contact customer service.";
-					$session = $this->_getCheckout();
-					$session->addError(Mage::helper('ccgateway')->__($errorMsg));
-					$this->_redirect('checkout/cart');
-				}else{
-						$this->responseAction($response);
-				}
-                
+
+                if($response['resptext']=="CardConnect_Error"){
+                    $errorMsg = "We are unable to perform the requested action, please contact customer service.";
+                    $session = $this->_getCheckout();
+                    $session->addError(Mage::helper('ccgateway')->__($errorMsg));
+                    $this->_redirect('checkout/cart');
+                }else{
+                    $this->responseAction($response);
+                }
+
             } else {
                 $this->loadLayout();
                 $this->renderLayout();
@@ -100,8 +100,8 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
         $session = $this->_getCheckout();
         $order = Mage::getModel('sales/order');
         $order->loadByIncrementId($session->getLastRealOrderId());
-		$ccToken = "";
-		
+        $ccToken = "";
+
         if ($this->getRequest()->isPost()) {
             $post = $this->getRequest()->getPost();
 
@@ -111,7 +111,7 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
             $avsResp = $post['avsResp'];
             $cvvResp = $post['cvvResp'];
             $retref = $post['retref'];
-			
+
 
             /* Handling Hosted Payment Page API Response */
             $data = array('CC_ACTION' => $cc_action, 			/* Checkout Transaction Type */
@@ -135,9 +135,9 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
             $avsResp = @$response['avsresp'];
             $cvvResp = @$response['cvvresp'];
             $retref = $response['retref'];
-			
-			
-			
+
+
+
             /* Handling Tokenize Post API Response */
             $data = array('CC_ACTION' => $cc_action, 			/* Checkout Transaction Type */
                 'CC_RETREF' => "$retref", 						/* Retrieval Reference Number */
@@ -183,29 +183,31 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
 
 
             if (($statAVS && $statCVV) == false) {
-                $this->responseCancel($errorStat);
                 $this->saveResponseData2ccgateway($data);
-                // Set custom order status
-                $order->setState(Mage_Sales_Model_Order::STATE_PENDING_PAYMENT, 'cardconnect_processing', $errorDesc)->save();
-                Mage::getModel('ccgateway/standard')->voidService($order);
+                $voidResponse = Mage::getModel('ccgateway/standard')->voidService($order);
+                if($voidResponse['respcode'] == '00' ){
+                    $this->responseCancel($errorStat);
+                    // Set custom order status
+                    $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_reject', $errorDesc)->save();
+                }
             } else {
-                $this->responseSuccess($orderId);
                 $this->saveResponseData2ccgateway($data);
+                $this->responseSuccess($orderId);
                 // Set custom order status
-                $order->setState(Mage_Sales_Model_Order::STATE_PENDING_PAYMENT, 'cardconnect_processing', $errorDesc)->save();
+                $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_processing', $errorDesc)->save();
             }
         } elseif ($errorCode == 02) {
             $errorStat = $response['respproc'] . $response['respcode'];
             $this->responseCancel($errorStat);
             $this->saveResponseData2ccgateway($data);
             // Set custom order status
-            $order->setState(Mage_Sales_Model_Order::STATE_PENDING_PAYMENT, 'cardconnect_reject', $errorDesc)->save();
+            $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_reject', $errorDesc)->save();
         } else {
             $errorStat = $response['respproc'] . $response['respcode'];
             $this->responseCancel(@$errorStat);
             $this->saveResponseData2ccgateway($data);
             // Set custom order status
-            $order->setState(Mage_Sales_Model_Order::STATE_PENDING_PAYMENT, 'cardconnect_reject', $errorDesc)->save();
+            $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_reject', $errorDesc)->save();
         }
     }
 
@@ -213,8 +215,8 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
     protected function saveResponseData2ccgateway($data) {
 
         $collection = Mage::getModel('cardconnect_ccgateway/cardconnect_resp')->getCollection()
-                ->addFieldToFilter('CC_ORDERID', array('eq' => $data['CC_ORDERID']))
-                ->addFieldToSelect('CC_ACTION');
+            ->addFieldToFilter('CC_ORDERID', array('eq' => $data['CC_ORDERID']))
+            ->addFieldToSelect('CC_ACTION');
 
         if ($collection->count() == 0) {
             $model = Mage::getModel('cardconnect_ccgateway/cardconnect_resp')->setData($data);
@@ -232,13 +234,12 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
 
         $order->sendNewOrderEmail();
         $order->setEmailSent(true);
-		$order->save();
 
         try {
 
             $session = Mage::getSingleton('checkout/session');
             $session->setQuoteId($session->getCcgatewayQuoteId());
-            $order->setState(Mage_Sales_Model_Order::STATE_PENDING_PAYMENT, 'cardconnect_processing', "Successfully order placed via CardConnect.");
+            $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_processing', "Successfully order placed via CardConnect.");
             $order->save();
             Mage::getSingleton('checkout/session')->getQuote()->setIsActive(false)->save();
             $this->_redirect('checkout/onepage/success', array('_secure'=>true));
@@ -284,8 +285,8 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
         }
 
         // Set custom order status
-        $order->setState(Mage_Sales_Model_Order::STATE_PENDING_PAYMENT, 'cardconnect_processing', $errorMsg)->save();
- 
+        $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_reject', $errorMsg)->save();
+
         $this->_redirect('checkout/cart');
     }
 
@@ -309,9 +310,9 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
         $json = json_encode($response);
 
         $this->getResponse()
-                ->clearHeaders()
-                ->setHeader('Content-Type', 'application/json')
-                ->setBody($json);
+            ->clearHeaders()
+            ->setHeader('Content-Type', 'application/json')
+            ->setBody($json);
     }
 
 // Function for call Get Profile Webservices Edit Card Data
@@ -323,9 +324,9 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
         $json = json_encode($response);
 
         $this->getResponse()
-                ->clearHeaders()
-                ->setHeader('Content-Type', 'application/json')
-                ->setBody($json);
+            ->clearHeaders()
+            ->setHeader('Content-Type', 'application/json')
+            ->setBody($json);
     }
 
 }

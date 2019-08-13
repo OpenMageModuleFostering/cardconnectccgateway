@@ -40,7 +40,7 @@ if(Mage::getStoreConfig('payment/ccgateway/active')==1){
 	$isTestMode = $this->isTransactionModeTest();
     $quote = Mage::getSingleton('checkout/session')->getQuote();
     $billingAddress = $quote->getBillingAddress();
-    
+
 	$requestUrl = Mage::getUrl('ccgateway/payment/getprofiledata',array('_secure'=>true));
     $billingStreet = $billingAddress->getStreet(1);
     $billingCity = $billingAddress->getCity();
@@ -50,11 +50,11 @@ if(Mage::getStoreConfig('payment/ccgateway/active')==1){
     $billingTelephone = $billingAddress->getTelephone();
     ?>
     <ul id="payment_form_<?php echo $_code ?>" style="display:none" >
-        <?php if ($this->getCheckoutType() == "payment_page") { ?> 
+        <?php if ($this->getCheckoutType() == "payment_page") { ?>
             <li>
                 <?php echo Mage::helper('ccgateway')->__('You will be redirected to CardConnect website when you place an order.') ?>
             </li>
-        <?php } else { ?> 
+        <?php } else { ?>
 
 
             <?php
@@ -72,14 +72,14 @@ if(Mage::getStoreConfig('payment/ccgateway/active')==1){
                             <?php foreach ($this->getCCProfileName() as $data): ?>
                                 <option value="<?php echo $data->getData('CC_PROFILEID'); ?>"
                                 <?php if ($data->getData('CC_PROFILEID') == $response[0]['profileid']) { ?>
-                                            selected="selected"  
+                                            selected="selected"
                                         <?php } ?> >
                                             <?php echo $data->getData('CC_CARD_NAME'); ?>
-                                </option> 
+                                </option>
                             <?php endforeach ?>
                             <option value="<?php echo "Checkout with new card"; ?>" ><?php echo "Checkout with new card"; ?></option>
                         </select>
-        
+
                     </div>
                 </li>
             <?php }else{ ?>
@@ -107,7 +107,7 @@ if(Mage::getStoreConfig('payment/ccgateway/active')==1){
                             <?php endforeach ?>
                         </select>
                     </div>
-                </li>        
+                </li>
             </div>
 
             <li <?php if($response =="CardConnect_Error"){?> style="display: none;" <?php } ?>>
@@ -119,10 +119,15 @@ if(Mage::getStoreConfig('payment/ccgateway/active')==1){
 
                 </div>
 
-            </li>  
+            </li>
             <li><div id="response"></div></li>
 
-            <div id="payment_info1" <?php if ($this->hasCCProfile() == true) { ?> style="display: none;" <?php } ?> >            
+                <div id="fade" style="display:none;">
+                    <div id="loading_box" class="loader"></div>
+                </div>
+
+
+            <div id="payment_info1" <?php if ($this->hasCCProfile() == true) { ?> style="display: none;" <?php } ?> >
                 <li>
                     <label for="<?php echo $_code ?>_expiration" class="required"><em>*</em><?php echo $this->__('Expiration Date') ?></label>
                     <div class="input-box">
@@ -145,7 +150,7 @@ if(Mage::getStoreConfig('payment/ccgateway/active')==1){
 
                     </div>
                 </li>
-            </div>                
+            </div>
             <li <?php if($response =="CardConnect_Error"){?> style="display: none;" <?php } ?>>
                 <label for="<?php echo $_code ?>_cc_cid" class="required"><em>*</em><?php echo $this->__('Card Verification Number') ?></label>
                 <div class="input-box">
@@ -158,14 +163,14 @@ if(Mage::getStoreConfig('payment/ccgateway/active')==1){
                     </div>
     <!--                    <a href="#" class="cvv-what-is-this"><?php // echo $this->__('What is this?')    ?></a> -->
                 </div>
-            </li>			
+            </li>
 
-<?php if (Mage::getSingleton('customer/session')->isLoggedIn()) { ?>			
+<?php if (Mage::getSingleton('customer/session')->isLoggedIn()) { ?>
             <div id="save_card_4future" <?php if ($this->hasCCProfile() == true) { ?> style="display:none;"  <?php } ?>>
                 <li>
                     <span style="margin-bottom: 10px;">
                         <input type="checkbox" title="<?php echo $this->__('Save Card details for future use') ?>"  id="ccgateway_cc_wallet" name="payment[cc_wallet]" value="checked" onclick="javascript:return showAliseField()"  />
-                    </span>                
+                    </span>
                     <label for="<?php echo $_code ?>_cc_wallet"><?php echo $this->__('Save Card details for future use') ?></label>
                 </li>
             </div>
@@ -176,15 +181,15 @@ if(Mage::getStoreConfig('payment/ccgateway/active')==1){
 
                 <li>
                     <label for="<?php echo $_code ?>_cc_Billing"><strong><?php echo $this->__('Billing Information') ?></strong></label>
-                </li>            
+                </li>
 
                 <li>
                     <span style="margin-bottom: 10px;">
-                        <input type="checkbox" title="<?php echo $this->__('Use default bill to address') ?>"  id="ccgateway_default_address" name="payment[cc_default_address]" value="checked" 
+                        <input type="checkbox" title="<?php echo $this->__('Use default bill to address') ?>"  id="ccgateway_default_address" name="payment[cc_default_address]" value="checked"
                                onclick="javascript:return showDefaultAddress('<?php echo $billingStreet; ?>', '<?php echo $billingCity; ?>', '<?php echo $billingRegion; ?>', '<?php echo $billingCountry; ?>', '<?php echo $billingPostCode; ?>', '<?php echo $billingTelephone; ?>')"  />
-                    </span>                
+                    </span>
                     <label for="<?php echo $_code ?>_default_address"><?php echo $this->__('Use default bill to address') ?></label>
-                </li>                  
+                </li>
 
 
                 <li>
@@ -211,7 +216,7 @@ if(Mage::getStoreConfig('payment/ccgateway/active')==1){
 
                     <label for="<?php echo $_code ?>_cc_region" class="required"><em>*</em><?php echo $this->__('State/Province') ?></label>
                     <div class="input-box">
-                        <?php $regionCollection = Mage::getModel('directory/region_api')->items("US"); ?>							
+                        <?php $regionCollection = Mage::getModel('directory/region_api')->items("US"); ?>
                         <select name='payment[cc_region]' id='<?php echo $_code ?>_cc_region' class="validate-select" >
                             <option value="">Please select region, state or province</option>
                             <?php
@@ -222,7 +227,7 @@ if(Mage::getStoreConfig('payment/ccgateway/active')==1){
                             }
                             ?>
 
-                        </select> 
+                        </select>
                     </div>
 
                 </li>
@@ -247,7 +252,7 @@ if(Mage::getStoreConfig('payment/ccgateway/active')==1){
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                            <?php endif; ?>							
+                            <?php endif; ?>
 
                         </div>
                     </div>
@@ -267,7 +272,7 @@ if(Mage::getStoreConfig('payment/ccgateway/active')==1){
                 </li>
 
 
-            </div>            
+            </div>
 
 
             <?php echo $this->getChildHtml() ?>

@@ -12,22 +12,22 @@
  *
  * */
 /**
-  Magento
+Magento
  *
-  NOTICE OF LICENSE
+NOTICE OF LICENSE
  *
-  This source file is subject to the Open Software License (OSL 3.0)
-  that is bundled with this package in the file LICENSE.txt.
-  It is also available through the world-wide-web at this URL:
-  http://opensource.org/licenses/osl-3.0.php
-  If you did not receive a copy of the license and are unable to
-  obtain it through the world-wide-web, please send an email
-  to license@magentocommerce.com so we can send you a copy immediately.
+This source file is subject to the Open Software License (OSL 3.0)
+that is bundled with this package in the file LICENSE.txt.
+It is also available through the world-wide-web at this URL:
+http://opensource.org/licenses/osl-3.0.php
+If you did not receive a copy of the license and are unable to
+obtain it through the world-wide-web, please send an email
+to license@magentocommerce.com so we can send you a copy immediately.
  *
-  @category Cardconnect
-  @package Cardconnect_Ccgateway
-  @copyright Copyright (c) 2014 CardConnect (http://www.cardconnect.com)
-  @license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+@category Cardconnect
+@package Cardconnect_Ccgateway
+@copyright Copyright (c) 2014 CardConnect (http://www.cardconnect.com)
+@license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  */
 $installer = $this;
 $installer->startSetup();
@@ -63,7 +63,7 @@ CREATE INDEX CC_RETREF_INDEX ON   {$this->getTable('cardconnect_resp')}  ( CC_RE
 // Set custom order status in sales_order_status table
 
 $statusTable = $installer->getTable('sales/order_status');
-
+$statusStateTable = $installer->getTable('sales/order_status_state');
 
 
 // Delete if order status exist
@@ -78,18 +78,37 @@ delete  from ' . $statusTable . ' where status = "cardconnect_processing";
 
 // Insert status
 $installer->getConnection()->insertArray(
-        $statusTable, array(
+    $statusTable, array(
     'status',
     'label'
-        ), array(
-    array('status' => 'cardconnect_capture', 'label' => 'CardConnect Capture'),
-    array('status' => 'cardconnect_void', 'label' => 'CardConnect Void'),
-    array('status' => 'cardconnect_refund', 'label' => 'CardConnect Refund'),
-    array('status' => 'cardconnect_reject', 'label' => 'CardConnect Rejected'),
-    array('status' => 'cardconnect_txn_settled', 'label' => 'CardConnect Txn Settled'),
-    array('status' => 'cardconnect_processing', 'label' => 'CardConnect Processing')
-        )
+), array(
+        array('status' => 'cardconnect_capture', 'label' => 'CardConnect Capture'),
+        array('status' => 'cardconnect_void', 'label' => 'CardConnect Void'),
+        array('status' => 'cardconnect_refund', 'label' => 'CardConnect Refund'),
+        array('status' => 'cardconnect_reject', 'label' => 'CardConnect Rejected'),
+        array('status' => 'cardconnect_txn_settled', 'label' => 'CardConnect Txn Settled'),
+        array('status' => 'cardconnect_processing', 'label' => 'CardConnect Processing')
+    )
 );
+
+
+// Insert states and mapping of statuses to states
+$installer->getConnection()->insertArray(
+    $statusStateTable,
+    array(
+        'status',
+        'state',
+        'is_default'
+    ),
+    array(
+        array(
+            'status' => 'cardconnect_refund',
+            'state' => 'refunded',
+            'is_default' => 1
+        )
+    )
+);
+
 
 $installer->run("
 DROP TABLE IF EXISTS {$this->getTable('cardconnect_wallet')};

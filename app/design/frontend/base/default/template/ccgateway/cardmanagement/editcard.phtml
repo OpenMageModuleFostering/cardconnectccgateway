@@ -38,7 +38,7 @@
 	   var requestUrl = "<?php echo Mage::getUrl('ccgateway/payment/getprofiledataedit',array('_secure'=>true)); ?>";
         var profile = "<?php echo $this->getRequest()->getParam('pid'); ?>";
         var cid = "<?php echo $this->getRequest()->getParam('cardid'); ?>";
-		
+
         new Ajax.Request(requestUrl, {
 			onCreate : startLoading,
             method: 'Post',
@@ -47,7 +47,7 @@
             onComplete: function  (transport) {
                 response = transport.responseText.evalJSON();
 				//alert(response.toSource());
-				
+
                 if(response[0].resptext == "CardConnect_Error"){
 					alert("We are unable to perform the requested action, please contact customer service.");
 				}else{
@@ -75,7 +75,7 @@
 					document.getElementById("_cc_region").value = response[0].region;
 					document.getElementById("_cc_country").value = response[0].country;
 					document.getElementById("_cc_postcode").value = response[0].postal;
-					document.getElementById("_cc_telephone").value = response[0].phone;					
+					document.getElementById("_cc_telephone").value = response[0].phone;
 				}
 
 
@@ -89,24 +89,6 @@
     });
 
 
- var loaded = false;
-  function startLoading() {
-    loaded = false;
-    window.setTimeout('showLoadingImage()', 1000);
-  }
-
-  function showLoadingImage() {
-    var el = document.getElementById("loading_box");
-    if (el && !loaded) {
-        el.innerHTML = '<img src="<?php echo $this->getSkinUrl('images/opc-ajax-loader.gif'); ?>" alt="Loading...">';
-        new Effect.Appear('loading_box');
-    }
-  } 
-  
-    function stopLoading() {
-    Element.hide('fade');
-    loaded = true;
-  }
 
     function removeCardNumber(){
         document.getElementById("ccgateway_cc_number").value = "";
@@ -115,16 +97,16 @@
     }
 </script>
 <style>
-#fade{ width:100%; height:100%; background:rgba(0,0,0,0.1); position:fixed; top:0px; left:0px;}
-.loader{position:absolute; top:80%; left:50%;}
+    #fade{ width:100%; height:100%; background:rgba(0,0,0,0.1); position:fixed; top:0px; left:0px;}
+    .loader{position:absolute; top:80%; left:50%;}
 </style>
 
 <div class="page-title title-buttons">
     <h1 onclick="getAlert();"><?php echo $this->__('Edit Card Form') ?></h1>
     <button type="button" title="<?php echo $this->__('Go Back') ?>" class="button" onclick="window.location = '<?php echo $this->getUrl('customer/cardmanagement/') ?>';"><span><span><?php echo $this->__('Go Back') ?></span></span></button>
 </div>
-<div id="fade">
-<div id="loading_box" class="loader"></div>
+<div id="fade" style="display:none;">
+    <div id="loading_box" class="loader"></div>
 </div>
 
 <fieldset class="form-list">
@@ -157,17 +139,17 @@
 							<option value=""><?php  echo $this->__('--Please Select--')   ?></option>
 							<?php  $_ccType = $this->getInfoData('cc_type'); ?>
 							<?php  foreach ($this->getCcTypes() as $ccType): ?>
-								<option value="<?php  echo $ccType['value'];   ?>"  ><?php  echo $ccType['label'];   ?></option> 
+								<option value="<?php  echo $ccType['value'];   ?>"  ><?php  echo $ccType['label'];   ?></option>
 							<?php endforeach ?>
-					    </select>                    
-                    
+					    </select>
+
                 </div>
             </li>
 
             <li>
                 <label for="<?php echo $_code ?>_cc_number" class="required"><em>*</em><?php echo $this->__('Credit Card Number') ?></label>
                 <div class="input-box">
-				
+
                     <input type="text" onblur="valid_credit_card(value, '<?php echo $isTestMode; ?>')"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org');
                             blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="editcard[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="" required />
                     <input type="hidden"   id="ccgateway_cc_number" name="editcard[cc_number]" title="<?php echo $this->__('Credit Card Number') ?>" class="input-text" value="" required />
@@ -218,7 +200,7 @@
 
                     <label for="<?php echo $_code ?>_cc_region" class="required"><em>*</em><?php echo $this->__('State/Province') ?></label>
                     <div class="input-box">
-                        <?php $regionCollection = Mage::getModel('directory/region_api')->items("US"); ?>                                       
+                        <?php $regionCollection = Mage::getModel('directory/region_api')->items("US"); ?>
                         <select name='editcard[cc_region]' id='<?php echo $_code ?>_cc_region' required>
                             <option>Please select region, state or province</option>
                             <?php

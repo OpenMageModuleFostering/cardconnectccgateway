@@ -29,6 +29,11 @@
   @license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  */
 ?>
+<style>
+    #fade{ width:100%; height:100%; background:rgba(0,0,0,0.1); position:fixed; top:0px; left:0px; display:none;}
+    .loader{position:absolute; top:80%; left:50%;}
+</style>
+
 <?php
 $_code = "ccgateway";
 
@@ -37,9 +42,9 @@ if(Mage::getSingleton('customer/session')->isLoggedIn()) {
     $customerData = Mage::getSingleton('customer/session')->getCustomer();
     $customerId = $customerData->getId();
     $address =  Mage::getSingleton('customer/session')->getCustomer()->getDefaultBillingAddress();
-    
+
     if($address){
-        $customer = Mage::getModel('customer/customer')->load($customerId);        
+        $customer = Mage::getModel('customer/customer')->load($customerId);
         $billingAddress = $customer->getDefaultBillingAddress();
         $billingStreet = $billingAddress->getData('street');
         $billingCity = $billingAddress->getData('city');
@@ -56,6 +61,10 @@ if(Mage::getSingleton('customer/session')->isLoggedIn()) {
 <div class="page-title title-buttons">
     <h1><?php echo $this->__('Add New Card Form') ?></h1>
     <button type="button" title="<?php echo $this->__('Go Back') ?>" class="button" onclick="window.location = '<?php echo $this->getUrl('customer/cardmanagement/') ?>';"><span><span><?php echo $this->__('Go Back') ?></span></span></button>
+</div>
+
+<div id="fade" style="display:none;">
+    <div id="loading_box" class="loader"></div>
 </div>
 
 <fieldset class="form-list">
@@ -82,11 +91,11 @@ if(Mage::getSingleton('customer/session')->isLoggedIn()) {
                     <select id="ccgateway_cc_type" name="addcard[cc_type]"  title="<?php echo $this->__('Credit Card Type') ?>" class="required-entry validate-select" required>
                         <option value=""><?php echo $this->__('--Please Select--') ?></option>
                         <?php foreach ($this->getCcTypes() as $ccType): ?>
-                            <option value="<?php echo $ccType['value']; ?>" ><?php echo $ccType['label'] ?></option> 
+                            <option value="<?php echo $ccType['value']; ?>" ><?php echo $ccType['label'] ?></option>
                         <?php endforeach ?>
                     </select>
                 </div>
-            </li>        
+            </li>
 
             <li>
                 <label for="<?php echo $_code ?>_cc_number" class="required"><em>*</em><?php echo $this->__('Credit Card Number') ?></label>
@@ -97,7 +106,7 @@ if(Mage::getSingleton('customer/session')->isLoggedIn()) {
 
                 </div>
 
-            </li>  
+            </li>
             <li><div id="response"></div></li>
 
             <li>
@@ -126,14 +135,14 @@ if(Mage::getSingleton('customer/session')->isLoggedIn()) {
 
             <li>
                 <label for="<?php echo $_code ?>_cc_Billing"><strong><?php echo $this->__('Billing Information') ?></strong></label>
-            </li> 
+            </li>
             <?php if($address){ ?>
             <li>
                 <div class="input-box">
                     <div class="v-fix">
                         <span style="margin-bottom: 10px;">
-                            <input type="checkbox" title="<?php echo $this->__('Use default bill to address') ?>" 
-                                   onclick="javascript:return showDefaultAddress('<?php echo $billingStreet; ?>', '<?php echo $billingCity; ?>', '<?php echo $billingRegion; ?>', '<?php echo $billingCountry; ?>', '<?php echo $billingPostCode; ?>', '<?php echo $billingTelephone; ?>')" 
+                            <input type="checkbox" title="<?php echo $this->__('Use default bill to address') ?>"
+                                   onclick="javascript:return showDefaultAddress('<?php echo $billingStreet; ?>', '<?php echo $billingCity; ?>', '<?php echo $billingRegion; ?>', '<?php echo $billingCountry; ?>', '<?php echo $billingPostCode; ?>', '<?php echo $billingTelephone; ?>')"
                                    id="ccgateway_default_address" name="addcard[default_address]" value=""  />  
                         </span>
                         <label for="<?php echo $_code ?>_cc_wallet"><?php echo $this->__('Use default bill to address') ?></label>
@@ -161,7 +170,7 @@ if(Mage::getSingleton('customer/session')->isLoggedIn()) {
 
                     <label for="<?php echo $_code ?>_cc_region" class="required"><em>*</em><?php echo $this->__('State/Province') ?></label>
                     <div class="input-box">
-                        <?php $regionCollection = Mage::getModel('directory/region_api')->items("US"); ?>							
+                        <?php $regionCollection = Mage::getModel('directory/region_api')->items("US"); ?>
                         <select name='addcard[cc_region]' id='<?php echo $_code ?>_cc_region' class="required-entry validate-select" required>
                             <option>Please select region, state or province</option>
                             <?php
@@ -172,7 +181,7 @@ if(Mage::getSingleton('customer/session')->isLoggedIn()) {
                             }
                             ?>
 
-                        </select> 
+                        </select>
                     </div>
 
                 </li>
@@ -197,7 +206,7 @@ if(Mage::getSingleton('customer/session')->isLoggedIn()) {
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                            <?php endif; ?>							
+                            <?php endif; ?>
 
                         </div>
                     </div>
@@ -222,12 +231,12 @@ if(Mage::getSingleton('customer/session')->isLoggedIn()) {
                                 </span>
                                 <label for="<?php // echo $_code  ?>_cc_wallet"><?php // echo $this->__('Make this Card as default')  ?></label>
                             </li>                
-                -->                
+                -->
 
 
                 <button id="addcardbutton" class="button" style="margin-top: 10px;" type="submit" title="<?php echo $this->__('Add') ?>" class="button" onclick="<?php echo $this->getUrl('ccgateway/cardmanagement/savecard'); ?>"><span><span><?php echo $this->__('Add') ?></span></span></button>
 
-            </div>            
+            </div>
 
 
             <?php echo $this->getChildHtml() ?>
