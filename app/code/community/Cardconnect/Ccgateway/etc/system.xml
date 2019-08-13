@@ -1,0 +1,261 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @brief Defines the xml representing CardConnect payment configuration form
+ * @category Magento CardConnect Payment Module
+ * @author CardConnect
+ * @copyright Portions copyright 2014 CardConnect
+ * @copyright Portions copyright Magento 2014
+ * @license GPL v2, please see LICENSE.txt
+ * @access public
+ * @version $Id: $
+ *
+ **/
+ 
+/**
+Magento
+*
+NOTICE OF LICENSE
+*
+This source file is subject to the Open Software License (OSL 3.0)
+that is bundled with this package in the file LICENSE.txt.
+It is also available through the world-wide-web at this URL:
+http://opensource.org/licenses/osl-3.0.php
+If you did not receive a copy of the license and are unable to
+obtain it through the world-wide-web, please send an email
+to license@magentocommerce.com so we can send you a copy immediately.
+*
+@category Cardconnect
+@package Cardconnect_Ccgateway
+@copyright Copyright (c) 2014 CardConnect (http://www.cardconnect.com)
+@license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+*/
+-->
+
+<config>
+    <sections>
+        <payment>
+            <groups>
+                <ccgateway translate="label comment" module="ccgateway">
+                    <label>CardConnect</label>
+                    <frontend_type>text</frontend_type>
+                    <sort_order>0</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <fields>
+                        <active translate="label">
+                            <label>Enabled </label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>3</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </active>
+                        <magepal translate="label">
+                            <label><![CDATA[<div style="position: absolute;"><a href="http://www.cardconnect.com" target="_blank" ><img id="cardconnect_block" src="" alt="" border="0" /></a></div>&nbsp;<script>$('cardconnect_block').src = SKIN_URL + "images/cardconnect/cardconnect.gif";</script>]]></label>
+                            <frontend_type>hidden</frontend_type>
+                            <comment> CardConnect is a leading provider of payment processing and technology services that helps more than 50,000 merchants across the U.S. accept billions of dollars in card transactions each year.   This  Extension from CardConnect helps you accept simple, integrated and secure payments on your Magento store. Please call 877.828.0720 today to get a Merchant Account!  </comment>
+                            <sort_order>1</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </magepal>
+                        <title translate="label">
+                            <label>Name</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>2</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </title>
+                        <order_status translate="label">
+                            <label>New Order Status</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_order_status</source_model>
+                            <sort_order>11</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </order_status>
+                        <test_mode translate="label">
+                            <label>Test Mode</label>
+                            <frontend_type>select</frontend_type>
+                            <sort_order>4</sort_order>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </test_mode>
+                        <checkout_trans translate="label">
+                            <label>Checkout transaction type</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>ccgateway_adminhtml/system_config_source_transaction</source_model> 
+                            <sort_order>5</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </checkout_trans>
+                        <checkout_type translate="label">
+                            <label>Checkout type</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>ccgateway_adminhtml/system_config_source_checkouttype</source_model> 
+                            <sort_order>6</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </checkout_type>
+                        <merchant translate="label">
+                            <label>Merchant Id</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>7</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </merchant>
+                        <card_id translate="label">
+                            <label>CardConnect Id</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>8</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+							<depends><checkout_type>payment_page</checkout_type></depends>
+                        </card_id>
+                        <site_name translate="label">
+                            <label>Site Name</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>9</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </site_name>
+                        <username translate="label">
+                            <label>Username</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>10</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </username>
+                        <password translate="label">
+                            <label>Password</label>
+                            <frontend_type>obscure</frontend_type>
+                            <backend_model>adminhtml/system_config_backend_encrypted</backend_model>
+                            <sort_order>11</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </password>
+                        <payment_method translate="label">
+                            <label>Select Payment Method</label>
+                            <comment>Select Yes For CardConnect Payment Gateway</comment>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>12</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </payment_method>
+                        <card_type translate="label">
+                            <label>Card type list</label>
+                            <frontend_type>multiselect</frontend_type>
+                            <source_model>ccgateway_adminhtml/system_config_source_cardtype</source_model>
+                            <sort_order>13</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </card_type>
+                        <void_avs translate="label">
+                            <label>Void on AVS failure</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>16</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </void_avs>
+                        <void_cvv translate="label">
+                            <label>Void on CVV failure</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>17</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </void_cvv>
+                        <address translate="label">
+                            <label>Display Address</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>18</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                            <depends><checkout_type>payment_page</checkout_type></depends>
+                        </address>
+                        <tokenize translate="label">
+                            <label>Tokenize</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>19</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </tokenize>
+                        <display translate="label">
+                            <label>Display CVV</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>20</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                            <depends><checkout_type>payment_page</checkout_type></depends>
+                        </display>
+                        <validation translate="label">
+                            <label>Immediate Validation</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>21</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                            <depends><checkout_type>payment_page</checkout_type></depends>
+                        </validation>
+                        <cancel translate="label">
+                            <label>Cancel Button</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>22</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                            <depends><checkout_type>payment_page</checkout_type></depends>
+                        </cancel>
+                        <css translate="label">
+                            <label>CSS URL</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>23</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                            <depends><checkout_type>payment_page</checkout_type></depends>
+                        </css>
+                        <sort_order translate="label">
+                            <label>Sort Order</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>22</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                            <depends><checkout_type>payment_page</checkout_type></depends>
+                        </sort_order>
+                    </fields>
+                </ccgateway>
+            </groups>
+        </payment>
+    </sections>
+</config>
+

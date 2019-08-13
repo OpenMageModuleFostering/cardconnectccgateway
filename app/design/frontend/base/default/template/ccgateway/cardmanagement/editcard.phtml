@@ -1,0 +1,292 @@
+<?php
+/**
+ * @brief Defines the html for show Credit Card Dashbord
+ * @category Magento CardConnect Payment Module
+ * @author CardConnect
+ * @copyright Portions copyright 2014 CardConnect
+ * @copyright Portions copyright Magento 2014
+ * @license GPL v2, please see LICENSE.txt
+ * @access public
+ * @version $Id: $
+ *
+ * */
+/**
+  Magento
+ *
+  NOTICE OF LICENSE
+ *
+  This source file is subject to the Open Software License (OSL 3.0)
+  that is bundled with this package in the file LICENSE.txt.
+  It is also available through the world-wide-web at this URL:
+  http://opensource.org/licenses/osl-3.0.php
+  If you did not receive a copy of the license and are unable to
+  obtain it through the world-wide-web, please send an email
+  to license@magentocommerce.com so we can send you a copy immediately.
+ *
+  @category Cardconnect
+  @package Cardconnect_Ccgateway
+  @copyright Copyright (c) 2014 CardConnect (http://www.cardconnect.com)
+  @license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ */
+?>
+
+
+<script>
+
+    document.observe("dom:loaded", function () {
+
+	   var requestUrl = "<?php echo Mage::getUrl('ccgateway/payment/getprofiledataedit',array('_secure'=>true)); ?>";
+        var profile = "<?php echo $this->getRequest()->getParam('pid'); ?>";
+        var cid = "<?php echo $this->getRequest()->getParam('cardid'); ?>";
+		
+        new Ajax.Request(requestUrl, {
+			onCreate : startLoading,
+            method: 'Post',
+            parameters: {profile: profile, cc_id: cid},
+            requestHeaders: {Accept: 'application/json'},
+            onComplete: function  (transport) {
+                response = transport.responseText.evalJSON();
+				//alert(response.toSource());
+				
+                if(response[0].resptext == "CardConnect_Error"){
+					alert("We are unable to perform the requested action, please contact customer service.");
+				}else{
+					var preResp = "************";
+					var maskToken = response[0].token.substr(12);
+					var month = response[0].expiry.substr(0, 2);
+					month = month.replace(/^0+/, '');
+					// month = getMonthName(month);
+					//  alert(month);
+					var year = response[0].expiry.substr(2, 4);
+
+					document.getElementById("_cc_alias").value = response[1];
+					document.getElementById("ccgateway_cc_number_org").value = preResp + maskToken;
+					document.getElementById("ccgateway_cc_number").value = response[0].token;
+					document.getElementById("ccgateway_cc_profile").value = profile;
+					document.getElementById("ccgateway_cc_wallet_id").value = cid;
+					document.getElementById("ccgateway_cc_type").value = response[0].accttype;
+					document.getElementById("_cc_owner").value = response[0].name;
+					document.getElementById("ccgateway_expiration").value = month;
+				   // document.getElementById("_expiration_disable").value = month;
+					document.getElementById("ccgateway_expiration_yr").value = "20" + year;
+				   // document.getElementById("_expiration_yr_disable").value = "20" + year;
+					document.getElementById("_cc_street").value = response[0].address;
+					document.getElementById("_cc_city").value = response[0].city;
+					document.getElementById("_cc_region").value = response[0].region;
+					document.getElementById("_cc_country").value = response[0].country;
+					document.getElementById("_cc_postcode").value = response[0].postal;
+					document.getElementById("_cc_telephone").value = response[0].phone;					
+				}
+
+
+				stopLoading();
+            }
+        });
+
+
+
+
+    });
+
+
+ var loaded = false;
+  function startLoading() {
+    loaded = false;
+    window.setTimeout('showLoadingImage()', 1000);
+  }
+
+  function showLoadingImage() {
+    var el = document.getElementById("loading_box");
+    if (el && !loaded) {
+        el.innerHTML = '<img src="<?php echo $this->getSkinUrl('images/opc-ajax-loader.gif'); ?>" alt="Loading...">';
+        new Effect.Appear('loading_box');
+    }
+  } 
+  
+    function stopLoading() {
+    Element.hide('fade');
+    loaded = true;
+  }
+
+    function removeCardNumber(){
+        document.getElementById("ccgateway_cc_number").value = "";
+        document.getElementById("ccgateway_cc_number_org").value = "";
+        document.getElementById("ccgateway_cc_number_org").focus();
+    }
+</script>
+<style>
+#fade{ width:100%; height:100%; background:rgba(0,0,0,0.1); position:fixed; top:0px; left:0px;}
+.loader{position:absolute; top:80%; left:50%;}
+</style>
+
+<div class="page-title title-buttons">
+    <h1 onclick="getAlert();"><?php echo $this->__('Edit Card Form') ?></h1>
+    <button type="button" title="<?php echo $this->__('Go Back') ?>" class="button" onclick="window.location = '<?php echo $this->getUrl('customer/cardmanagement/') ?>';"><span><span><?php echo $this->__('Go Back') ?></span></span></button>
+</div>
+<div id="fade">
+<div id="loading_box" class="loader"></div>
+</div>
+
+<fieldset class="form-list">
+    <form id="editcard" name="editcard" method="post" action="<?php echo Mage::getUrl('ccgateway/cardmanagement/updateprofile',array('_secure'=>true)); ?>" onload="callGetProfileWebserviceController(<?php echo $this->getUrl('ccgateway/payment/getprofiledata'); ?>",profile);">
+        <?php
+        $_code = $this->getMethodCode();
+		$isTestMode = $this->isTransactionModeTest();
+        $quote = Mage::getSingleton('checkout/session')->getQuote();
+        $billingAddress = $quote->getBillingAddress();
+        ?>
+        <ul id="add_new_card_form_<?php echo $_code ?>" style="display:block">
+
+            <li>
+                <p class="required"><?php echo $this->__('* Required Fields') ?></p>
+                <label for="<?php echo $_code ?>_cc_alias" class="required"><em>*</em><?php echo $this->__('Alias') ?></label>
+                <div class="input-box">
+                    <input type="text"  title="<?php echo $this->__('Alias') ?>" class="input-text required-entry validate-alphanum" id="<?php echo $_code ?>_cc_alias" name="editcard[cc_profile_name]" value=""  required/>
+                </div>
+            </li>
+            <li>
+                <label for="<?php echo $_code ?>_cc_owner" class="required"><em>*</em><?php echo $this->__('Name on Card') ?></label>
+                <div class="input-box">
+                    <input type="text"  title="<?php echo $this->__('Name on Card') ?>" class="input-text required-entry" id="<?php echo $_code ?>_cc_owner" name="editcard[cc_owner]" value="" required />
+                </div>
+            </li>
+            <li>
+                <label for="<?php echo $_code ?>_cc_type" class="required validate-cc-type "><em>*</em><?php echo $this->__('Credit Card Type') ?></label>
+                <div class="input-box">
+					   <select  id="<?php echo $_code   ?>ccgateway_cc_type" name='editcard[cc_type]' onchange="javascript:return removeCardNumber()"  title="<?php  echo $this->__('Credit Card Type')   ?>"  required >
+							<option value=""><?php  echo $this->__('--Please Select--')   ?></option>
+							<?php  $_ccType = $this->getInfoData('cc_type'); ?>
+							<?php  foreach ($this->getCcTypes() as $ccType): ?>
+								<option value="<?php  echo $ccType['value'];   ?>"  ><?php  echo $ccType['label'];   ?></option> 
+							<?php endforeach ?>
+					    </select>                    
+                    
+                </div>
+            </li>
+
+            <li>
+                <label for="<?php echo $_code ?>_cc_number" class="required"><em>*</em><?php echo $this->__('Credit Card Number') ?></label>
+                <div class="input-box">
+				
+                    <input type="text" onblur="valid_credit_card(value, '<?php echo $isTestMode; ?>')"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org');
+                            blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="editcard[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="" required />
+                    <input type="hidden"   id="ccgateway_cc_number" name="editcard[cc_number]" title="<?php echo $this->__('Credit Card Number') ?>" class="input-text" value="" required />
+                    <input type="hidden"   id="ccgateway_cc_profile" name="editcard[profile]" title="<?php echo $this->__('Customer Profile') ?>" class="input-text" value="" required />
+                    <input type="hidden"   id="ccgateway_cc_wallet_id" name="editcard[wallet_id]" title="<?php echo $this->__('Card wallet id') ?>" class="input-text" value="" required />
+
+                </div>
+
+            </li>
+            <li><div id="response"></div></li>
+
+            <li>
+                <label for="ccgateway_expiration" class="required"><em>*</em><?php echo $this->__('Expiration Date') ?></label>
+                <div class="input-box">
+                    <div class="v-fix">
+                        <select id="ccgateway_expiration" name='editcard[cc_exp_month]' class="month validate-cc-exp required-entry" style="width: 150px;"  required >
+                            <?php foreach ($this->getCcMonths() as $k => $v): ?>
+                                <option value="<?php echo $k ? $k : '' ?>"<?php #if ($k == $_ccExpMonth):    ?> selected="selected"<?php #endif    ?>><?php echo $v ?></option>
+                            <?php endforeach ?>
+                        </select>
+                    </div>
+                    <div class="v-fix">
+                        <select id="ccgateway_expiration_yr" name='editcard[cc_exp_year]' class="year required-entry" style="width: 150px;"  required >
+                            <?php foreach ($this->getCcYears() as $k => $v): ?>
+                                <option value="<?php echo $k ? $k : '' ?>"<?php #if ($k == $_ccExpYear):    ?> selected="selected"<?php #endif    ?>><?php echo $v ?></option>
+                            <?php endforeach ?>
+                        </select>
+                    </div>
+
+                </div>
+            </li>
+
+            <div id="save_card" style="display:block;">
+                <li>
+                    <label for="<?php echo $_code ?>_cc_street" class="required"><em>*</em><?php echo $this->__('Address') ?></label>
+                    <div class="input-box">
+                        <input type="text"  title="<?php echo $this->__('Street Address') ?>" class="input-text required-entry" id="<?php echo $_code ?>_cc_street" name="editcard[cc_street]" value="" required />
+                    </div>
+                </li>
+                <li>
+                    <label for="<?php echo $_code ?>_cc_city" class="required"><em>*</em><?php echo $this->__('City') ?></label>
+                    <div class="input-box">
+                        <input type="text"  title="<?php echo $this->__('City') ?>" class="input-text required-entry" id="<?php echo $_code ?>_cc_city" name="editcard[cc_city]" value="" required />
+                    </div>
+                </li>
+
+                <li>
+
+                    <label for="<?php echo $_code ?>_cc_region" class="required"><em>*</em><?php echo $this->__('State/Province') ?></label>
+                    <div class="input-box">
+                        <?php $regionCollection = Mage::getModel('directory/region_api')->items("US"); ?>                                       
+                        <select name='editcard[cc_region]' id='<?php echo $_code ?>_cc_region' required>
+                            <option>Please select region, state or province</option>
+                            <?php
+                            foreach ($regionCollection as $region) {
+                                ?>
+                                <option value="<?php echo $region['name'] ?>"  <?php
+                                if ($billingAddress->getRegion() == $region['name']) {
+                                    echo 'selected="selected"';
+                                }
+                                ?> ><?php echo $region['name'] ?></option>
+                                        <?php
+                                    }
+                                    ?>
+
+                        </select>
+                    </div>
+
+                </li>
+
+                <li>
+                    <div class="field">
+                        <label for="<?php echo $_code ?>_cc_country" class="required"><em>*</em><?php echo $this->__('Country') ?></label>
+                        <div class="input-box">
+                            <?php
+                            $_countries = Mage::getResourceModel('directory/country_collection')
+                                    ->loadData()
+                                    ->toOptionArray(false)
+                            ?>
+                            <?php if (count($_countries) > 0): ?>
+                                <select name="editcard[cc_country]" id="<?php echo $_code ?>_cc_country" required>
+                                    <option value="">-- Please Select --</option>
+                                    <?php foreach ($_countries as $_country): ?>
+                                        <option value="<?php echo $_country['value'] ?>" <?php
+                                        if ($billingAddress->getCountryId() == $_country['value']) {
+                                            echo 'selected="selected"';
+                                        }
+                                        ?>>
+                                                    <?php echo $_country['label'] ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            <?php endif; ?>
+
+                        </div>
+                    </div>
+                </li>
+
+                <li>
+                    <label for="<?php echo $_code ?>_cc_postcode" class="required"><em>*</em><?php echo $this->__('Zip/Postal Code') ?></label>
+                    <div class="input-box">
+                        <input type="text"  title="<?php echo $this->__('Zip/Postal Code') ?>" class="input-text required-entry" id="<?php echo $_code ?>_cc_postcode" name="editcard[cc_postcode]" value=""  required />
+                    </div>
+                </li>
+                <li>
+                    <label for="<?php echo $_code ?>_cc_telephone" class="required"><em>*</em><?php echo $this->__('Telephone') ?></label>
+                    <div class="input-box">
+                        <input type="text"  title="<?php echo $this->__('telephone') ?>" class="input-text required-entry"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org');
+            blockNonNumbers(this, event, false, false)" maxlength="10" id="<?php echo $_code ?>_cc_telephone" name="editcard[cc_telephone]" value="" required />
+                    </div>
+                </li>
+
+                <button id="editcardbutton" class="button" style="margin-top: 10px;" type="submit" title="<?php echo $this->__('Update') ?>" class="button" onclick="<?php #echo $this->getUrl('ccgateway/cardmanagement/savecard');    ?>"><span><span><?php echo $this->__('Update') ?></span></span></button>
+
+            </div>
+
+
+            <?php echo $this->getChildHtml() ?>
+
+        </ul>
+    </form>
+</fieldset>

@@ -1,0 +1,197 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @brief Defines the xml representing extension version, model and rewrite
+ * @category Magento CardConnect Payment Module
+ * @author CardConnect
+ * @copyright Portions copyright 2014 CardConnect
+ * @copyright Portions copyright Magento 2014
+ * @license GPL v2, please see LICENSE.txt
+ * @access public
+ * @version $Id: $
+ *
+ **/
+ 
+/**
+Magento
+*
+NOTICE OF LICENSE
+*
+This source file is subject to the Open Software License (OSL 3.0)
+that is bundled with this package in the file LICENSE.txt.
+It is also available through the world-wide-web at this URL:
+http://opensource.org/licenses/osl-3.0.php
+If you did not receive a copy of the license and are unable to
+obtain it through the world-wide-web, please send an email
+to license@magentocommerce.com so we can send you a copy immediately.
+*
+@category Cardconnect
+@package Cardconnect_Ccgateway
+@copyright Copyright (c) 2014 CardConnect (http://www.cardconnect.com)
+@license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+*/
+-->
+
+<config>
+    <modules>
+        <Cardconnect_Ccgateway>
+            <version>1.0.1</version>
+        </Cardconnect_Ccgateway>
+    </modules>
+    <global>
+        <models>
+            <ccgateway>
+                <class>Cardconnect_Ccgateway_Model</class>
+            </ccgateway>
+        </models>
+        <helpers>
+            <ccgateway>
+                <class>Cardconnect_Ccgateway_Helper</class>
+            </ccgateway>
+        </helpers>
+        <blocks>
+            <ccgateway>
+                <class>Cardconnect_Ccgateway_Block</class>
+            </ccgateway>
+        </blocks>
+        
+        <blocks>
+            <adminhtml>
+                <rewrite>
+                    <sales_order_view_tab_info>Cardconnect_Ccgateway_Block_Adminhtml_Sales_Order_View_Tab_Info</sales_order_view_tab_info>
+                    <sales_order_invoice_create_form>Cardconnect_Ccgateway_Block_Adminhtml_Sales_Order_Invoice_Create_Form</sales_order_invoice_create_form>
+                    <sales_order_invoice_create_items>Cardconnect_Ccgateway_Block_Adminhtml_Sales_Order_Invoice_Create_Items</sales_order_invoice_create_items>
+                    <sales_order_shipment_create_form>Cardconnect_Ccgateway_Block_Adminhtml_Sales_Order_Shipment_Create_Form</sales_order_shipment_create_form>
+                    <sales_order_creditmemo_create_form>Cardconnect_Ccgateway_Block_Adminhtml_Sales_Order_Creditmemo_Create_Form</sales_order_creditmemo_create_form>
+                    <sales_order_invoice_view_form>Cardconnect_Ccgateway_Block_Adminhtml_Sales_Order_Invoice_View_Form</sales_order_invoice_view_form>
+                    <sales_order_shipment_view_form>Cardconnect_Ccgateway_Block_Adminhtml_Sales_Order_Shipment_View_Form</sales_order_shipment_view_form>
+                    <sales_order_creditmemo_view_form>Cardconnect_Ccgateway_Block_Adminhtml_Sales_Order_Creditmemo_View_Form</sales_order_creditmemo_view_form>
+                    <sales_order_creditmemo_create_items>Cardconnect_Ccgateway_Block_Adminhtml_Sales_Order_Creditmemo_Create_Items</sales_order_creditmemo_create_items>
+                    <customer_edit_tab_account>Cardconnect_Ccgateway_Block_Adminhtml_Customer_Edit_Tab_Account</customer_edit_tab_account>
+                </rewrite>
+            </adminhtml>
+        </blocks>
+     
+        
+        <models>
+            <ccgateway_adminhtml>
+                <class>Cardconnect_Ccgateway_adminhtml_Model</class>
+            </ccgateway_adminhtml>
+        </models>
+        <models>
+            <cardconnect_ccgateway>
+                <class>Cardconnect_Ccgateway_Model</class>
+                <resourceModel>cardconnect_ccgateway_resource</resourceModel>
+            </cardconnect_ccgateway>
+            <cardconnect_ccgateway_resource>
+                <class>Cardconnect_Ccgateway_Model_Resource</class>
+                <entities>
+                    <cardconnect_resp>
+                        <table>cardconnect_resp</table>
+                    </cardconnect_resp>
+                </entities>
+                <entities>
+                    <cardconnect_wallet>
+                        <table>cardconnect_wallet</table>
+                    </cardconnect_wallet>
+                </entities>
+            </cardconnect_ccgateway_resource>
+        </models>
+        <resources>
+            <cardconnect_ccgateway_setup> 
+                <setup>
+                    <module>Cardconnect_Ccgateway</module>  
+                    <connection>
+                        <use>core_setup</use>
+                    </connection> 
+                </setup>   
+            </cardconnect_ccgateway_setup>   
+            <cardconnect_ccgateway_write> 
+                <connection> 
+                    <use>core_write</use> 
+                </connection>
+            </cardconnect_ccgateway_write>  
+            <cardconnect_ccgateway_read>
+                <connection> 
+                    <use>core_read</use> 
+                </connection> 
+            </cardconnect_ccgateway_read>    
+        </resources>
+		<events> 
+			<controller_action_postdispatch_checkout_onepage_savePayment>
+				<observers>
+					<ccgateway>
+						<type>model</type>	
+						<class>ccgateway/observer</class>
+						<method>savePaymentAction</method>
+					</ccgateway>
+				</observers>
+			</controller_action_postdispatch_checkout_onepage_savePayment>	
+		</events>
+    </global>
+    <default>
+        <payment>
+            <ccgateway>
+                <model>ccgateway/standard</model>
+                <active>1</active>
+                <order_status>pending</order_status>
+                <title>CardConnect</title>
+                <payment_action>sale</payment_action>
+                <allowspecific>0</allowspecific>
+                <sort_order>1</sort_order>
+            </ccgateway>
+        </payment>
+    </default>
+    <frontend>
+        <routers>
+            <ccgateway>
+                <use>standard</use>
+                <args>
+                    <module>Cardconnect_Ccgateway</module>
+                    <frontName>ccgateway</frontName>
+                </args>
+            </ccgateway>
+        </routers>
+
+        <layout>
+            <updates>
+                <ccgateway>
+                    <file>ccgateway.xml</file>
+                </ccgateway>
+            </updates>
+        </layout>
+    </frontend>
+    <frontend>
+        <routers>
+            <customer>
+                <args>
+                    <modules>
+                        <Cardconnect_Ccgateway after="Mage_Customer">Cardconnect_Ccgateway</Cardconnect_Ccgateway>
+                    </modules>
+                </args>
+            </customer>
+        </routers>        
+    </frontend> 
+    <admin>
+        <routers>
+            <adminhtml>
+                <args>
+                    <modules>
+                        <Cardconnect_Ccgateway before="Mage_Adminhtml">Cardconnect_Ccgateway_Adminhtml</Cardconnect_Ccgateway>
+                    </modules>
+                </args>
+            </adminhtml>
+        </routers>
+    </admin>
+    
+    <adminhtml>
+        <layout>
+            <updates>
+                <ccgateway>
+                    <file>ccgateway.xml</file>
+                </ccgateway>
+            </updates>
+        </layout>
+    </adminhtml>
+    
+</config>

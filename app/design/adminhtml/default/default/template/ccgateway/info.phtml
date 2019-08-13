@@ -1,0 +1,141 @@
+<?php
+/**
+ * @brief Representing CardConnect Payment information in admin
+ * @category Magento CardConnect Payment Module
+ * @author CardConnect
+ * @copyright Portions copyright 2014 CardConnect
+ * @copyright Portions copyright Magento 2014
+ * @license GPL v2, please see LICENSE.txt
+ * @access public
+ * @version $Id: $
+ *
+ **/
+ 
+/**
+Magento
+*
+NOTICE OF LICENSE
+*
+This source file is subject to the Open Software License (OSL 3.0)
+that is bundled with this package in the file LICENSE.txt.
+It is also available through the world-wide-web at this URL:
+http://opensource.org/licenses/osl-3.0.php
+If you did not receive a copy of the license and are unable to
+obtain it through the world-wide-web, please send an email
+to license@magentocommerce.com so we can send you a copy immediately.
+*
+@category Cardconnect
+@package Cardconnect_Ccgateway
+@copyright Copyright (c) 2014 CardConnect (http://www.cardconnect.com)
+@license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+*/
+
+if ($info = $this->getInfo()) {
+    ?>
+
+    <style type="text/css">
+        th{ text-align: center; vertical-align: middle;}   
+    </style>  
+
+    <div class="grid np">
+        <div class="hor-scroll">
+            <table cellspacing="0" class="data order-tables">
+                <thead>
+                    <tr class="headings">
+                        <th><span class="nobr"><?php echo $this->helper('sales')->__('Order Id') ?></span></th>
+                        <th><span class="nobr"><?php echo $this->helper('sales')->__('Action') ?></span></th>
+                        <th><span class="nobr"><?php echo $this->helper('sales')->__('Retrieval') ?><br/>Reference Number</span></th>
+                        <th class="a-center"><?php echo $this->helper('sales')->__('Response') ?><br/>Status</th>
+                        <th><span class="nobr"><?php echo $this->helper('sales')->__('Response Code') ?></span></th>
+                        <th><span class="nobr"><?php echo $this->helper('sales')->__('Response ') ?><br/>Text</span></th>
+                        <th><span class="nobr"><?php echo $this->helper('sales')->__('Response ') ?><br/>Processor</span></th>
+                        <th><span class="nobr"><?php echo $this->helper('sales')->__('Authorization') ?><br/>Code</span></th>
+                        <th><span class="nobr"><?php echo $this->helper('sales')->__('Authorization') ?><br/>Date</span></th>
+                        <th><span class="nobr"><?php echo $this->helper('sales')->__('Avs Result') ?></span></th>
+                        <th><span class="nobr"><?php echo $this->helper('sales')->__('Cvv Result') ?></span></th>
+                        <th class="last"><span class="nobr"><?php echo $this->helper('sales')->__('Order Amount') ?></span></th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <?php
+  
+                    $responseData = $this->getPaymentResponseData();
+                    
+                    foreach ($responseData as $data) {
+                        $orderId = $data->getData('CC_ORDERID');
+                        $ccAction = $data->getData('CC_ACTION');
+                        $retrefRefrenceNumber = $data->getData('CC_RETREF');
+                        $responseStatus = $data->getData('CC_RESPSTAT');
+                        $responseProcessor = $data->getData('CC_RESPPROC');
+                        $responseCode = $data->getData('CC_RESPCODE');
+                        $responseText = $data->getData('CC_RESPTEXT');
+                        $authDesc = $data->getData('CC_AUTHCODE');
+                        $avsResp = $data->getData('CC_AVSRESP');
+                        $cvvResp = $data->getData('CC_CVVRESP');
+                        $amount = $data->getData('CC_AMT');
+                        $authDate = $data->getData('CC_CREATED');
+                        
+                        if (strpos($ccAction, '_')) {
+                            $ccAction = str_replace("_", " and ", $ccAction);
+                        }
+                        if(empty($responseStatus)) {    $responseStatus = "N/A"; }
+                        if(empty($responseProcessor)) {    $responseProcessor = "N/A"; }
+                        if(empty($responseCode)) {    $responseCode = "N/A"; }
+                        if(empty($authDesc)) {    $authDesc = "N/A"; }
+                        if(empty($avsResp)) {    $avsResp = "N/A"; }
+                        if(empty($cvvResp)) {    $cvvResp = "N/A"; }
+                      //  $authDate = Mage::getModel('core/date')->date('d/m/Y H:i:s', strtotime($authDate));
+                        $authDate = Mage::helper('core')->formatTime($authDate, 'short', TRUE);
+                        ?>
+                        <tr>
+                            <td><?php echo $orderId; ?></td> 
+                            <td><?php echo ucfirst($ccAction); ?></td> 
+                            <td><?php echo $retrefRefrenceNumber; ?></td> 
+                            <td><?php echo $responseStatus; ?></td> 
+                            <td><?php echo $responseCode; ?></td>
+                            <td><?php  echo $responseText; ?></td>
+                            <td><?php echo $responseProcessor; ?></td>
+                            <td><?php echo $authDesc; ?></td> 
+                            <td><?php echo $authDate; ?></td>
+                            <td><?php echo $avsResp; ?></td> 
+                            <td><?php echo $cvvResp; ?></td> 
+                            <td><?php echo $amount; ?></td> 
+                        </tr>
+
+
+                    <?php
+                    }
+                    ?>
+
+
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+    <br />
+    <button id="id_inquire" title="Inquire" onclick="callInquireController();" type="button" class="submit" ><span><span><span>Inquire</span></span></span></button>
+    <br />
+    <?php
+}
+if(!empty($orderId)){
+?>
+
+<script type="text/javascript">
+
+    
+ function callInquireController(){
+
+           new Ajax.Request("<?php echo $this->getUrl('ccgateway/payment/inquire') ?>", {
+               method: 'Post',
+               parameters: {orderId:<?php echo $orderId; ?>},
+               onComplete: function(transport) {
+                   alert(transport.responseText); 
+                    window.location.reload();
+               }
+           });
+       }
+</script>
+<?php } ?>

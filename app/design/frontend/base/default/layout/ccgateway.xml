@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @brief To redirect to CardConnect payment page
+ * @category Magento CardConnect Payment Module
+ * @author CardConnect
+ * @copyright Portions copyright 2014 CardConnect
+ * @copyright Portions copyright Magento 2014
+ * @license GPL v2, please see LICENSE.txt
+ * @access public
+ * @version $Id: $
+ *
+ **/
+ 
+ 
+/**
+Magento
+*
+NOTICE OF LICENSE
+*
+This source file is subject to the Open Software License (OSL 3.0)
+that is bundled with this package in the file LICENSE.txt.
+It is also available through the world-wide-web at this URL:
+http://opensource.org/licenses/osl-3.0.php
+If you did not receive a copy of the license and are unable to
+obtain it through the world-wide-web, please send an email
+to license@magentocommerce.com so we can send you a copy immediately.
+*
+@category Cardconnect
+@package Cardconnect_Ccgateway
+@copyright Copyright (c) 2014 CardConnect (http://www.cardconnect.com)
+@license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+*/
+-->
+
+<layout version="0.1.0">
+    <ccgateway_payment_redirect>
+        <reference name="root">
+            <action method="setTemplate">
+                <template>ccgateway/blank.phtml</template>
+            </action>
+        </reference>
+        <reference name="content">
+            <block type="ccgateway/redirect" name="ccgateway_redirect" template="ccgateway/redirect.phtml" />
+        </reference>
+    </ccgateway_payment_redirect> 
+    
+    <default>
+        <reference name="head">
+            <action method="addJs">
+                <script>cardconnect/ccgateway.js</script>
+            </action>
+        </reference>
+    </default>
+    
+    <customer_account translate="label">
+        <reference name="customer_account_navigation">
+            <action method="addLink">
+                <name>Card Management</name>
+                <path>customer/cardmanagement/</path>
+                <label>Card Management</label>
+            </action>
+        </reference>
+    </customer_account>
+    
+    <customer_cardmanagement_index>
+        <update handle="customer_account"/>
+        <reference name="my.account.wrapper">
+            <block type="ccgateway/cardmanagement" name="customer_walletcard_management" template="ccgateway/cardmanagement/index.phtml" />
+        </reference>
+    </customer_cardmanagement_index>  
+
+    <customer_cardmanagement_new>
+        <update handle="customer_account"/>
+        <reference name="my.account.wrapper">
+            <block type="ccgateway/cardmanagement" name="customer_walletcard_management" template="ccgateway/cardmanagement/new.phtml" />
+        </reference>
+    </customer_cardmanagement_new> 
+      
+    <customer_cardmanagement_editcard>
+        <update handle="customer_account"/>
+        <reference name="my.account.wrapper">
+            <block type="ccgateway/cardmanagement" name="customer_walletcard_management" template="ccgateway/cardmanagement/editcard.phtml" />
+        </reference>
+    </customer_cardmanagement_editcard>  
+</layout>
+
