@@ -86,6 +86,52 @@ class Cardconnect_Ccgateway_Helper_Data extends Mage_Payment_Helper_Data {
         }
     }
 
+    /**
+     *  Get Frontend Id
+     */
+    public function getFrontendId(){
+        $frontendId = 'Magento';
+
+        return $frontendId;
+    }
+
+    public function getSiteName(){
+        $ccsite = Mage::getModel('ccgateway/standard')->getConfigData('site_name');
+
+        return $ccsite;
+    }
+
+
+    /**
+     * Retrive CardConnect method
+     *
+     * @return object
+     */
+    public function getCardConnectWebService($order = "")
+    {
+
+        if (!empty($order)) {
+            $username = Mage::getModel('ccgateway/standard')->getConfigData('username', $order->getStoreId());
+            $merchid = Mage::getModel('ccgateway/standard')->getConfigData('merchant', $order->getStoreId());
+            $cc_password = Mage::getModel('ccgateway/standard')->getConfigData('password', $order->getStoreId());
+            $testmode = Mage::getModel('ccgateway/standard')->getConfigData('test_mode', $order->getStoreId());
+            $ccsite = Mage::getModel('ccgateway/standard')->getConfigData('site_name', $order->getStoreId());
+        } else {
+            $username = Mage::getModel('ccgateway/standard')->getConfigData('username');
+            $merchid = Mage::getModel('ccgateway/standard')->getConfigData('merchant');
+            $cc_password = Mage::getModel('ccgateway/standard')->getConfigData('password');
+            $testmode = Mage::getModel('ccgateway/standard')->getConfigData('test_mode');
+            $ccsite = Mage::getModel('ccgateway/standard')->getConfigData('site_name');
+        }
+        $frontendid = $this->getFrontendId();
+        $keyLocation = Mage::getModel('ccgateway/standard')->getKeysLocation();
+
+        $cc = new CardConnectWebService($testmode, $ccsite, $frontendid, $username, $cc_password, $merchid, $keyLocation);
+
+        return $cc;
+    }
+
+
     public function matchResponseError($respErrorCode){
 
         $errorList = array("PPS11" => "Invalid card",

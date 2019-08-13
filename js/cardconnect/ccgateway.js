@@ -30,17 +30,20 @@ to license@magentocommerce.com so we can send you a copy immediately.
 */
 
 
-function tokenize(cardNum , isTestMode) {
+function tokenize(cardNum , isTestMode, siteName) {
 
     document.getElementById("ccgateway_cc_number_org").disabled = true;
     document.getElementById("response").innerHTML = "";
 
+    testTemplateUrl = "https://[SITE].prinpay.com:6443/cardsecure/cs";
+    prodTemplateUrl = "https://[SITE].prinpay.com:8443/cardsecure/cs";
+
     // construct url
-	if(isTestMode == "yes"){
-		var url = "https://fts.prinpay.com:6443/cardsecure/cs";
-	}else{
-		var url = "https://fts.prinpay.com:8443/cardsecure/cs";
-	}
+    if(isTestMode == "yes"){
+        var url = testTemplateUrl .replace("[SITE]", siteName);
+    }else{
+        var url = prodTemplateUrl.replace("[SITE]", siteName )
+    }
 
     var method = "GET";
     var type = "json";
@@ -92,7 +95,6 @@ function processXMLHttpResponse() {
         var response = "";
         if (xhr.status == 200) {
             response = processResponse(response);
-            //  alert(response);
         } else {
             response = "There was a problem with the request " + xhr.status;
         }
@@ -119,7 +121,7 @@ function processXDomainResponse() {
 }
 
 function processResponse(response) {
-    //  alert(response);
+
     var type = "json";
     if (type == "xml") {
         var cardsecure = xhr.responseXML;
@@ -165,16 +167,15 @@ function parseXml(xmlStr) {
 
 
 
-function valid_credit_card(value, isTestMode)
+function valid_credit_card(value, isTestMode, siteName)
 {
     startLoading();
     // The Luhn Algorithm. It's so pretty.
     var nCheck = 0, nDigit = 0, bEven = false;
     if (value == null || value == "") {
-       // alert("Please Fill the require field");
         document.getElementById("testError").style.display = "block";
-	document.getElementById("testError").innerHTML = "Please Fill the require field.";
-	stopLoading();
+	    document.getElementById("testError").innerHTML = "Please Fill the require field.";
+	    stopLoading();
         return false;
     } else {
         var cardNum = value;
@@ -201,7 +202,7 @@ function valid_credit_card(value, isTestMode)
         var e = document.getElementById("ccgateway_cc_type");
         var selectedCardType = e.options[e.selectedIndex].value;
         if (cardType == selectedCardType && selectedCardType != null && cardNum != null && cardNum.length >=12 ) {
-            tokenize(cardNum , isTestMode);
+            tokenize(cardNum , isTestMode, siteName);
             setTimeout(stopLoading, 1000);
         } else {
             document.getElementById("testError").style.display = "block";

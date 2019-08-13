@@ -78,10 +78,12 @@ class Cardconnect_Ccgateway_CardmanagementController extends Mage_Customer_Accou
             $response = Mage::getModel('ccgateway/standard')->createProfileService($data);
             if ($response['resptext'] == "Profile Saved") {
                 Mage::getSingleton('core/session')->addSuccess("Card has been added successfully.");
-                $this->_redirect('customer/cardmanagement');
+            }else{
+                Mage::getSingleton('core/session')->addError(Mage::helper('ccgateway')->__("Unable to perform add card. Please, retry."));
             }
+            $this->_redirect('customer/cardmanagement');
         } catch (Exception $e) {
-			Mage::logException($e);	
+            Mage::logException($e);
             throw new Exception("Unable to perform add card. Please, retry.");
         }
     }
@@ -91,7 +93,6 @@ class Cardconnect_Ccgateway_CardmanagementController extends Mage_Customer_Accou
      */
     public function makedefaultpaymentAction() {
         $walletId = $this->getRequest()->getParam('id');
-        $cc_card_val = $this->getRequest()->getParam('value');
 
         if (Mage::getSingleton('customer/session')->isLoggedIn()) {
             $customerData = Mage::getSingleton('customer/session')->getCustomer();
@@ -99,7 +100,6 @@ class Cardconnect_Ccgateway_CardmanagementController extends Mage_Customer_Accou
         }
 
         $resource = Mage::getSingleton('core/resource');
-        $readConnection = $resource->getConnection('core_read');
         $writeConnection = $resource->getConnection('core_write');
         $getTable = $resource->getTableName('cardconnect_wallet');
 
@@ -134,7 +134,6 @@ class Cardconnect_Ccgateway_CardmanagementController extends Mage_Customer_Accou
 
         $this->loadLayout();
         $this->_initMessages();
-        $braintree = Mage::getModel('ccgateway/standard');
         $this->getLayout()->getBlock('customer_walletcard_management')->setTemplate('ccgateway/cardmanagement/editcard.phtml');
         $this->renderLayout();
     }
@@ -147,7 +146,7 @@ class Cardconnect_Ccgateway_CardmanagementController extends Mage_Customer_Accou
     public function updateprofileAction() {
 
         $data = $this->getRequest()->getPost('editcard', array());
-		
+
         $param = array(
             'cc_profile_name' => $data['cc_profile_name'],
             'wallet_id' => $data['wallet_id'],
@@ -168,13 +167,15 @@ class Cardconnect_Ccgateway_CardmanagementController extends Mage_Customer_Accou
 
         // Call function Create Profile webservices
         $response = Mage::getModel('ccgateway/standard')->updateProfileService($param);
+	Mage::log($response, Zend_Log::ERR, "cc.log");
         if ($response == "Profile Updated") {
             Mage::getSingleton('core/session')->addSuccess("Card has been updated successfully.");
-            $this->_redirect('customer/cardmanagement');
         } else {
-            $this->_redirect('customer/cardmanagement');
-            throw new Exception("Unable to perform update. Please, retry.");
+            Mage::getSingleton('core/session')->addError(Mage::helper('ccgateway')->__("Unable to perform update. Please, retry."));
         }
+        $this->_redirect('customer/cardmanagement');
+
     }
+
 
 }

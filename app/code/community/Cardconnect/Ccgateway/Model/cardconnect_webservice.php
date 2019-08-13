@@ -1,7 +1,7 @@
 <?php
 /**
  * @brief Defines the class representing CardConnect Payments
- * @category CardConnect Payment Module 
+ * @category CardConnect Payment Module
  * @author CardConnect
  * @copyright Portions copyright 2014 CardConnect
  * @license GPL v2, please see LICENSE.txt
@@ -40,14 +40,39 @@ class CardConnectWebService
     var $restUrl;
     var $merchantId;
     var $lasterror;
+    var $testMode;
+    var $ccSite;
+    var $frontEndID;
+    var $testTemplateUrl;
+    var $prodTemplateUrl;
 
-    function CardConnectWebService($url, $username, $password, $merchantId, $keys_location)
+    function CardConnectWebService($testmode, $ccsite, $frontendid, $username, $password, $merchantId, $keys_location)
     {
-        $this->restUrl = $url;
         $this->userName = $username;
         $this->passWord = $password;
         $this->merchantId = $merchantId;
         $this->keys_location = $keys_location;
+        $this->testMode = $testmode;
+        $this->ccSite = $ccsite;
+        $this->frontEndID = $frontendid;
+        $this->testTemplateUrl = 'https://[SITE].prinpay.com:6443/cardconnect/rest/';
+        $this->prodTemplateUrl = 'https://[SITE].prinpay.com:8443/cardconnect/rest/';
+
+        if (!empty($this->ccSite)) {
+            if ($testmode === 'No' || $testmode == 0) {
+                // replace sitename in $prodTemplateUrl
+                $this->restUrl = str_ireplace("[SITE]", $this->ccSite, $this->prodTemplateUrl);
+                error_log("Modified Production URL " . $this->restUrl);
+            } else {
+                $this->restUrl = str_ireplace("[SITE]", $this->ccSite, $this->testTemplateUrl);
+                error_log("Modified Test URL " . $this->restUrl);
+            }
+        } else {
+            $mymessage = "CC: ccSite name is empty ";
+            error_log("CC Error : " . $mymessage . " Last Error Message : " . $this->getLastErrorMessage());
+            $this->restUrl = "";
+        }
+
     }
 
     /**
@@ -113,14 +138,14 @@ class CardConnectWebService
 
             curl_close($curl);
 
-	    if ($info['http_code'] != "200") {
+            if ($info['http_code'] != "200") {
                 $this->lasterror = "ERROR ";
                 if (!empty($info['http_code']))
-                        $this->lasterror = $this->lasterror . ":http=" . $info['http_code'];
+                    $this->lasterror = $this->lasterror . ":http=" . $info['http_code'];
                 if ($curlerrno != 0)
-                        $this->lasterror = $this->lasterror . ":errno=" . $curlerrno . ":errdesc=" . $curlerrdesc;
+                    $this->lasterror = $this->lasterror . ":errno=" . $curlerrno . ":errdesc=" . $curlerrdesc;
                 if (!empty($result))
-                        $this->lasterror = $this->lasterror . ":result=" . $result;
+                    $this->lasterror = $this->lasterror . ":result=" . $result;
                 $result = "";
             }
             return $result;
@@ -136,7 +161,8 @@ class CardConnectWebService
      */
     public function authService($authrequest)
     {
-        if(!empty($authrequest['profileid'])) {
+
+        if (!empty($authrequest['profileid'])) {
             $param = array(
                 'merchid'       => $this->merchantId,
                 'profile'       => $authrequest['profileid'],
@@ -144,32 +170,44 @@ class CardConnectWebService
                 'amount'        => $authrequest['currency_value'],
                 'ecomind'       => $authrequest['ecomind'],
                 'cvv2'          => $authrequest['cvv_val'],
-                'capture'       => $authrequest['capture']);
-        }
-        else {
-            $param = array(
-                'merchid'       => $this->merchantId,
-                'accttype'      => $authrequest['acc_type'],
-                'orderid'       => $authrequest['order_id'],
-                'account'       => $authrequest['acc_num'],
-                'expiry'        => $authrequest['expirydt'],
-                'amount'        => $authrequest['currency_value'],
-                'currency'      => $authrequest['currency'],
-                'name'          => $authrequest['cc_owner'],
-                'address'       => $authrequest['billing_street_address'],
-                'city'          => $authrequest['billing_city'],
-                'region'        => $authrequest['billing_state'],
-                'country'       => $authrequest['billing_country'],
-                'postal'        => $authrequest['billing_postcode'],
-                'ecomind'       => $authrequest['ecomind'],
-                'cvv2'          => $authrequest['cvv_val'],
-                'track'         => null,
-                'tokenize'      => 'Y',
-                'capture'       => $authrequest['capture']);
+                'capture'       => $authrequest['capture'],
+                //'ccSite'        => $this->ccSite,
+                'frontendid'    => $this->frontEndID);
 
+            $response = $this->sendTransactionToGateway('auth', $param);
+        } else {
+            if (!empty($authrequest['acc_num'])) {
+                $param = array(
+                    'merchid'       => $this->merchantId,
+                    'accttype'      => $authrequest['acc_type'],
+                    'orderid'       => $authrequest['order_id'],
+                    'account'       => $authrequest['acc_num'],
+                    'expiry'        => $authrequest['expirydt'],
+                    'amount'        => $authrequest['currency_value'],
+                    'currency'      => $authrequest['currency'],
+                    'name'          => $authrequest['cc_owner'],
+                    'address'       => $authrequest['billing_street_address'],
+                    'city'          => $authrequest['billing_city'],
+                    'region'        => $authrequest['billing_state'],
+                    'country'       => $authrequest['billing_country'],
+                    'postal'        => $authrequest['billing_postcode'],
+                    'ecomind'       => $authrequest['ecomind'],
+                    'cvv2'          => $authrequest['cvv_val'],
+                    'track'         => null,
+                    'tokenize'      => 'Y',
+                    'capture'       => $authrequest['capture'],
+                    //'ccSite'        => $this->ccSite,
+                    'frontendid'    => $this->frontEndID);
+
+                $response = $this->sendTransactionToGateway('auth', $param);
+
+            } else {
+                $mymessage = "CC: Account number is empty ";
+                error_log("CC Error : " . $mymessage . " Last Error Message : " . $this->getLastErrorMessage());
+                $response = '';
+            }
         }
 
-        $response = $this->sendTransactionToGateway('auth', $param);
         return $response;
 
     }
@@ -191,7 +229,9 @@ class CardConnectWebService
             'merchid'       => $this->merchantId,
             'authcode'      => $cc_authcode,
             'amount'        => $currency_value,
-            'invoiceid'     => $order_id);
+            'invoiceid'     => $order_id,
+            //'ccSite'        => $this->ccSite,
+            'frontendid'    => $this->frontEndID);
 
         $response = $this->sendTransactionToGateway('capture', $param);
         return $response;
@@ -210,7 +250,9 @@ class CardConnectWebService
         $param = array(
             'retref'        => $cc_retref,
             'merchid'       => $this->merchantId,
-            'amount'        => $currency_value
+            'amount'        => $currency_value,
+            //'ccSite'        => $this->ccSite,
+            'frontendid'    => $this->frontEndID
         );
 
         $response = $this->sendTransactionToGateway('void', $param);
@@ -230,7 +272,9 @@ class CardConnectWebService
         $param = array(
             'retref'        => $cc_retref,
             'merchid'       => $this->merchantId,
-            'amount'        => $currency_value
+            'amount'        => $currency_value,
+            //'ccSite'        => $this->ccSite,
+            'frontendid'    => $this->frontEndID
         );
 
         $response = $this->sendTransactionToGateway('refund', $param);
@@ -249,6 +293,8 @@ class CardConnectWebService
         $param = array(
             'retref'        => $cc_retref,
             'merchid'       => $this->merchantId
+            /*'ccSite'        => $this->ccSite,
+            'frontendid'    => $this->frontEndID*/
         );
 
         $postString = '';
@@ -303,6 +349,8 @@ class CardConnectWebService
             'phone'                 => $profrequest['phone'],
             'postal'                => $profrequest['postal'],
             'merchid'               => $this->merchantId
+            /*'ccSite'                => $this->ccSite,
+            'frontendid'            => $this->frontEndID*/
         );
 
         $response = $this->sendTransactionToGateway('profile', $param);
@@ -322,6 +370,8 @@ class CardConnectWebService
             'profileid'         => $profileid,
             'acctid'            => $acctid,
             'merchid'           => $this->merchantId
+            /*'ccSite'            => $this->ccSite,
+            'frontendid'        => $this->frontEndID*/
         );
 
         $postString = '';
@@ -347,6 +397,8 @@ class CardConnectWebService
         $param = array(
             'profileid'         => $profileid,
             'merchid'           => $this->merchantId
+            /*'ccSite'            => $this->ccSite,
+            'frontendid'        => $this->frontEndID*/
         );
 
         $postString = '';

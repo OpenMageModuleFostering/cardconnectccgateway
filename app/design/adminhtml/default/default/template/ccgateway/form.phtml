@@ -36,6 +36,7 @@
 <fieldset class="form-list">
     <?php $_code = $this->getMethodCode();
     $isTestMode = $this->isTransactionModeTest();
+    $siteName = Mage::helper('ccgateway')->getSiteName();
     ?>
     <ul id="payment_form_<?php echo $_code ?>" style="display:none">
         <?php if ($this->getCheckoutType() == "payment_page") { ?>
@@ -68,7 +69,7 @@
             <li>
                 <label for="<?php echo $_code ?>_cc_number" class="required"><em>*</em><?php echo $this->__('Credit Card Number') ?></label>
                 <div class="input-box">
-                    <input type="text" onchange="valid_credit_card(value, '<?php echo $isTestMode; ?>')"  onkeypress="javascript:return validate(event , 'ccgateway_cc_number_org'); blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="payment[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="<?php if($this->getInfoData('cc_number')){ echo substr_replace($this->getInfoData('cc_number'), str_repeat('*', 12), 0, 12); } ?>" />
+                    <input type="text" onchange="valid_credit_card(value, '<?php echo $isTestMode; ?>', '<?php echo $siteName; ?>')"  onkeypress="javascript:return validate(event , 'ccgateway_cc_number_org'); blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="payment[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="<?php if($this->getInfoData('cc_number')){ echo substr_replace($this->getInfoData('cc_number'), str_repeat('*', 12), 0, 12); } ?>" />
                     <input type="hidden"   id="<?php // echo $_code ?>ccgateway_cc_number" name="payment[cc_number]" title="<?php echo $this->__('Credit Card Number') ?>" class="input-text" value="<?php echo $this->getInfoData('cc_number')?>" />
                     <div class="validation-advice" id="testError" style="display: none;"></div>
                 </div>

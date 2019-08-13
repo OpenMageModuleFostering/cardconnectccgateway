@@ -294,9 +294,7 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
     public function authService($order, $authAmount = "", $status = "") {
 
         $orderId = $order->getIncrementId();
-        $username = $this->getConfigData('username' , $order->getStoreId());
         $merchid = $this->getConfigData('merchant' , $order->getStoreId());
-        $cc_password = $this->getConfigData('password', $order->getStoreId());
 
         if (empty($status)) {
             $ccOwner = Mage::getSingleton('core/session')->getCcOwner();
@@ -372,8 +370,7 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
                 'tokenize' => 'Y');
         }
 
-        $cc = new CardConnectWebService($this->getWebServicesUrl(), $username, $cc_password, $merchid, $this->getKeysLocation());
-
+        $cc = Mage::helper('ccgateway')->getCardConnectWebService($order);
         $resp = $cc->authService($param);
 
         if (empty($status)) {
@@ -450,12 +447,9 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
             $retref = $this->getRetrefReferenceNumber($orderId);
             $authCode = $this->getAuthCode($orderId);
             $checkout_trans = $this->getPaymentTransactionType();
-            $username = $this->getConfigData('username' , $payment->getOrder()->getStoreId());
             $merchid = $this->getConfigData('merchant' , $payment->getOrder()->getStoreId());
-            $cc_password = $this->getConfigData('password', $payment->getOrder()->getStoreId());
 
-            $cc = new CardConnectWebService($this->getWebServicesUrl(), $username, $cc_password, $merchid, $this->getKeysLocation());
-
+            $cc = Mage::helper('ccgateway')->getCardConnectWebService($order);
 
             if ($fullAuthorizedAmount == $amount) {
                 $resp = $cc->captureService($retref, $authCode, $amount, $orderId);
@@ -530,11 +524,8 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
             $amount = number_format($amount, 2);
         }
         $amount = str_replace(",", "", $amount);
-        $username = $this->getConfigData('username' , $order->getStoreId());
-        $merchid = $this->getConfigData('merchant' , $order->getStoreId());
-        $cc_password = $this->getConfigData('password', $order->getStoreId());
 
-        $cc = new CardConnectWebService($this->getWebServicesUrl(), $username, $cc_password, $merchid, $this->getKeysLocation());
+        $cc = Mage::helper('ccgateway')->getCardConnectWebService($order);
         $resp = $cc->voidService($retref, $amount);
 
         if ($resp != "") {
@@ -594,11 +585,8 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
         $order = $payment->getOrder();
         $orderId = $order->increment_id;
         $retref = $this->getRetrefReferenceNumber($orderId, "Refund");
-        $username = $this->getConfigData('username' , $payment->getOrder()->getStoreId());
-        $merchid = $this->getConfigData('merchant' , $payment->getOrder()->getStoreId());
-        $cc_password = $this->getConfigData('password', $payment->getOrder()->getStoreId());
 
-        $cc = new CardConnectWebService($this->getWebServicesUrl(), $username, $cc_password, $merchid, $this->getKeysLocation());
+        $cc = Mage::helper('ccgateway')->getCardConnectWebService($order);
 
         $resp = $cc->inquireService($retref);
         $response = json_decode($resp, true);
@@ -625,9 +613,7 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
         $order = $payment->getOrder();
         $orderId = $order->increment_id;
         $retref = $this->getRetrefReferenceNumber($orderId, "Refund");
-        $username = $this->getConfigData('username' , $payment->getOrder()->getStoreId());
         $merchid = $this->getConfigData('merchant' , $payment->getOrder()->getStoreId());
-        $cc_password = $this->getConfigData('password', $payment->getOrder()->getStoreId());
 
         if ($amount <= 0) {
             Mage::throwException(Mage::helper('ccgateway')->__('Invalid amount for refund.'));
@@ -639,8 +625,7 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
 
         $amount = str_replace(",", "", $amount);
 
-        $cc = new CardConnectWebService($this->getWebServicesUrl(), $username, $cc_password, $merchid, $this->getKeysLocation());
-
+        $cc = Mage::helper('ccgateway')->getCardConnectWebService($order);
         $resp = $cc->refundService($retref, $amount);
 
         if ($resp != "") {
@@ -678,8 +663,6 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
         $order = Mage::getModel('sales/order');
         $order->loadByIncrementId($orderId);
         $responseData = $this->getResponseDataByOrderId($orderId);
-        $username = $this->getConfigData('username' , $order->getStoreId());
-        $merchid = $this->getConfigData('merchant' , $order->getStoreId());
         $cc_password = $this->getConfigData('password', $order->getStoreId());
 
 
@@ -696,9 +679,7 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
                     $order_amount = $data->getData('CC_AMT');
                     $setlstat = $data->getData('CC_SETLSTAT');
 
-
-                    $cc = new CardConnectWebService($this->getWebServicesUrl(), $username, $cc_password, $merchid, $this->getKeysLocation());
-
+                    $cc = Mage::helper('ccgateway')->getCardConnectWebService($order);
                     $resp = $cc->inquireService($retref);
                     $response = json_decode($resp, true);
                     if (!empty($response)) {
@@ -767,10 +748,6 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
 // Create Profile webservices     
     function createProfileService($paymentInformation) {
 
-        $username = $this->getConfigData('username');
-        $merchid = $this->getConfigData('merchant');
-        $cc_password = $this->getConfigData('password');
-
         if (Mage::getSingleton('customer/session')->isLoggedIn()) {
             $customerData = Mage::getSingleton('customer/session')->getCustomer();
             $ccUserId = $customerData->getId();
@@ -798,8 +775,7 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
             'postal' => $paymentInformation['cc_postcode']
         );
 
-        $cc = new CardConnectWebService($this->getWebServicesUrl(), $username, $cc_password, $merchid, $this->getKeysLocation());
-
+        $cc = Mage::helper('ccgateway')->getCardConnectWebService();
         $resp = $cc->createProfileService($profrequest);
 
         if ($resp != "") {
@@ -829,16 +805,12 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
 // Function for Get Profile webservices
     function getProfileWebService($profileId, $cc_id) {
 
-        $username = $this->getConfigData('username');
-        $merchid = $this->getConfigData('merchant');
-        $cc_password = $this->getConfigData('password');
+        $cc = Mage::helper('ccgateway')->getCardConnectWebService();
 
-        $cc = new CardConnectWebService($this->getWebServicesUrl(), $username, $cc_password, $merchid, $this->getKeysLocation());
         $resp = $cc->getProfileService($profileId);
         if (!empty($resp) && $cc_id != "") {
             $resource = Mage::getSingleton('core/resource');
             $readConnection = $resource->getConnection('core_read');
-            $writeConnection = $resource->getConnection('core_write');
             $getTable = $resource->getTableName('cardconnect_wallet');
 
             $selQry = "SELECT CC_CARD_NAME FROM {$getTable} WHERE CC_ID=" . $cc_id;
@@ -858,11 +830,7 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
 // Function for Get Profile webservices Checkout
     function getProfileWebServiceCheckout($profileId) {
 
-        $username = $this->getConfigData('username');
-        $merchid = $this->getConfigData('merchant');
-        $cc_password = $this->getConfigData('password');
-
-        $cc = new CardConnectWebService($this->getWebServicesUrl(), $username, $cc_password, $merchid, $this->getKeysLocation());
+        $cc = Mage::helper('ccgateway')->getCardConnectWebService();
         $resp = $cc->getProfileService($profileId);
         if (empty($resp)) {
             $myLogMessage = "CC Get Profile Service : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
@@ -876,10 +844,6 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
 // Function for Delete Profile webservices
 
     function deleteWalletDataService($profileRowId, $ccUserId= "") {
-
-        $username = $this->getConfigData('username');
-        $merchid = $this->getConfigData('merchant');
-        $cc_password = $this->getConfigData('password');
 
         if(empty($ccUserId)){
             if (Mage::getSingleton('customer/session')->isLoggedIn()) {
@@ -900,7 +864,7 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
 
 
         if (!empty($tokenNum)) {
-            $cc = new CardConnectWebService($this->getWebServicesUrl(), $username, $cc_password, $merchid, $this->getKeysLocation());
+            $cc = Mage::helper('ccgateway')->getCardConnectWebService();
             $resp = $cc->deleteProfileService($ccProfileId);
 
             if (!empty($resp)) {
@@ -972,8 +936,7 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
         );
 
 
-        $cc = new CardConnectWebService($this->getWebServicesUrl(), $username, $cc_password, $merchid, $this->getKeysLocation());
-
+        $cc = Mage::helper('ccgateway')->getCardConnectWebService();
         $resp = $cc->createProfileService($profrequest);
         if ($resp != "") {
             $response = json_decode($resp, true);
@@ -987,7 +950,7 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
                 $response = "Profile Updated";
             } else {
                 $errorMessage = "There is some problem in update profile. Due to " . $response['resptext'];
-                Mage::log($errorMessage, Zend_Log::ERR);
+                Mage::log($errorMessage, Zend_Log::ERR, "cc.log");
             }
         } else {
             $myLogMessage = "CC Update Profile Service : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
