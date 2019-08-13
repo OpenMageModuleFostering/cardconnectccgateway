@@ -41,8 +41,9 @@
         <Cardconnect_Ccgateway>
             <active>true</active>
             <codePool>community</codePool>
-			<depends>
+	    <depends>
                 <Mage_Sales/>
+                <Mage_Customer/>
             </depends>
         </Cardconnect_Ccgateway>
     </modules>

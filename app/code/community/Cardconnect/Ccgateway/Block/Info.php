@@ -85,9 +85,9 @@ class Cardconnect_Ccgateway_Block_Info extends Mage_Payment_Block_Info {
      * @return string
      */    
     public function getCheckoutType(){
-        $type = Mage::getStoreConfig('payment/ccgateway/checkout_type');
-         
-        return $type;
+        $checkoutType = Mage::getModel('ccgateway/standard')->getConfigData('checkout_type');
+
+        return $checkoutType;
     }
     
 

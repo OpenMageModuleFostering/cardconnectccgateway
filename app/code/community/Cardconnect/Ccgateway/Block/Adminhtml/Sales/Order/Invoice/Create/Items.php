@@ -54,7 +54,7 @@ class Cardconnect_Ccgateway_Block_Adminhtml_Sales_Order_Invoice_Create_Items ext
     }
     
     // Check the Capture status for a current order     
-    public function getCaptureStatus(){
+    public function isCaptureAllowed(){
         $order = $this->getOrder();
         $orderId = $order->increment_id;
         
@@ -66,7 +66,7 @@ class Cardconnect_Ccgateway_Block_Adminhtml_Sales_Order_Invoice_Create_Items ext
         foreach ($collection as $data) {
             $cc_action[] = $data->getData('CC_ACTION');
         }
-        if (in_array("Capture", $cc_action)) {
+        if (in_array("authorize_capture", $cc_action) || in_array("Capture", $cc_action)) {
             $c_status = false;
         }else{
             $c_status = true;
@@ -74,6 +74,52 @@ class Cardconnect_Ccgateway_Block_Adminhtml_Sales_Order_Invoice_Create_Items ext
      
         return $c_status;
     }
+
+
+
+    /**
+     * Check capture availability
+     *
+     * @return bool
+     */
+/*    public function canCapture() {
+        $order = $this->getOrder();
+        if ($this->getConfigData('checkout_trans' , $order->getStoreId()) == "authorize_capture") {
+            $_canCapture = false;
+        } else {
+            $_canCapture = true;
+        }
+
+        return $_canCapture;
+    }
+*/
+
+    /**
+     * Retrieve information from payment configuration
+     *
+     * @param string $field
+     * @param int|string|null|Mage_Core_Model_Store $storeId
+     *
+     * @return mixed
+     */
+/*    public function getConfigData($field, $storeId = null)
+    {
+        if (null === $storeId) {
+            if (Mage::app()->getStore()->getCode() == Mage_Core_Model_Store::ADMIN_CODE) {
+                $storeId = Mage::getSingleton('adminhtml/session_quote')->getStoreId();
+            } else {
+                $storeId = $this->getStore();
+            }
+        }
+        $path = 'payment/ccgateway/'.$field;
+
+        $myLogMessage = "CC Config Data Service : ". __FILE__ . " @ " . __LINE__ ."  Path: ".$path." Store Id: ".$storeId;
+        Mage::log($myLogMessage, Zend_Log::INFO , "cc.log" );
+
+        return Mage::getStoreConfig($path, $storeId);
+    }
+
+*/
 
 }
 

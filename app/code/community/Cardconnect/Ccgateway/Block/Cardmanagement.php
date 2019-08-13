@@ -70,7 +70,7 @@ class Cardconnect_Ccgateway_Block_Cardmanagement extends Mage_Core_Block_Templat
      * @return string
      */
     public function isTransactionModeTest() {
-          $isTestMode = Mage::getStoreConfig('payment/ccgateway/test_mode');
+        $isTestMode = Mage::getModel('ccgateway/standard')->getConfigData('test_mode');
         switch ($isTestMode) {
             case 0:
                 $isTestMode = 'no';
@@ -113,11 +113,11 @@ class Cardconnect_Ccgateway_Block_Cardmanagement extends Mage_Core_Block_Templat
      * @return array
      */
     public function getCcTypes() {
-        
+
 		$cc_types = new Cardconnect_Ccgateway_Adminhtml_Model_System_Config_Source_Cardtype();
 		$types = $cc_types->toOptionArray();
 
-        $availableTypes = Mage::getStoreConfig('payment/ccgateway/card_type');
+        $availableTypes = Mage::getModel('ccgateway/standard')->getConfigData('card_type');
 
         if ($availableTypes) {
             $availableTypes = explode(',', $availableTypes);
@@ -196,14 +196,4 @@ class Cardconnect_Ccgateway_Block_Cardmanagement extends Mage_Core_Block_Templat
         return $addressdata;
     }
 
-	
-function getSystemPath($path) {
-    $newPath = '';
-    $parts = explode('/', $path);
-    if (count($parts) != 3) { //you must have at least 3 parts in the node name
-        return '';
-    }
-    return 'sections/'.$parts[0].'/groups/'.$parts[1].'/fields/'.$parts[2];
-
-}	
 }

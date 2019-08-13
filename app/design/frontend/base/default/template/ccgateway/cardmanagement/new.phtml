@@ -88,7 +88,7 @@ if(Mage::getSingleton('customer/session')->isLoggedIn()) {
                 <label for="<?php echo $_code ?>_cc_type" class="required validate-cc-type "><em>*</em><?php echo $this->__('Credit Card Type') ?></label>
                 <div class="input-box">
 
-                    <select id="ccgateway_cc_type" name="addcard[cc_type]"  title="<?php echo $this->__('Credit Card Type') ?>" class="required-entry validate-select" required>
+                    <select id="ccgateway_cc_type" name="addcard[cc_type]" onchange="resetcardinfo();"  title="<?php echo $this->__('Credit Card Type') ?>" class="required-entry validate-select" required>
                         <option value=""><?php echo $this->__('--Please Select--') ?></option>
                         <?php foreach ($this->getCcTypes() as $ccType): ?>
                             <option value="<?php echo $ccType['value']; ?>" ><?php echo $ccType['label'] ?></option>
@@ -103,7 +103,7 @@ if(Mage::getSingleton('customer/session')->isLoggedIn()) {
                     <input type="text" onblur="valid_credit_card(value, '<?php echo $isTestMode; ?>')"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org');
                             blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="addcard[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="" required />
                     <input type="hidden"   id="ccgateway_cc_number" name="addcard[cc_number]" title="<?php echo $this->__('Credit Card Number') ?>" class="input-text" value="" required />
-
+					<div class="validation-advice" id="testError" style="display: none;"></div>
                 </div>
 
             </li>
@@ -114,14 +114,12 @@ if(Mage::getSingleton('customer/session')->isLoggedIn()) {
                 <div class="input-box">
                     <div class="v-fix">
                         <select id="<?php echo $_code ?>_expiration" name="addcard[cc_exp_month]" class="month validate-cc-exp required-entry" style="width: 150px;" required>
-                            <?php #$_ccExpMonth = $this->getInfoData('cc_exp_month')  ?>
                             <?php foreach ($this->getCcMonths() as $k => $v): ?>
                                 <option value="<?php echo $k ? $k : '' ?>" ><?php echo $v ?></option>
                             <?php endforeach ?>
                         </select>
                     </div>
                     <div class="v-fix">
-                        <?php #$_ccExpYear = $this->getInfoData('cc_exp_year')  ?>
                         <select id="<?php echo $_code ?>_expiration_yr" name="addcard[cc_exp_year]" class="year required-entry" style="width: 150px;" required>
                             <?php foreach ($this->getCcYears() as $k => $v): ?>
                                 <option value="<?php echo $k ? $k : '' ?>" ><?php echo $v ?></option>
@@ -225,14 +223,6 @@ if(Mage::getSingleton('customer/session')->isLoggedIn()) {
                                 blockNonNumbers(this, event, false, false)" maxlength="10" id="<?php echo $_code ?>_cc_telephone" name="addcard[cc_telephone]" value="" required />
                     </div>
                 </li>
-                <!--            <li>
-                                <span style="margin-bottom: 10px;">
-                                        <input type="checkbox" title="<?php // echo $this->__('Make this Card as default')  ?>"  id="ccgateway_cc_wallet" name="addcard[cc_defaultwallet]" value=""   />
-                                </span>
-                                <label for="<?php // echo $_code  ?>_cc_wallet"><?php // echo $this->__('Make this Card as default')  ?></label>
-                            </li>                
-                -->
-
 
                 <button id="addcardbutton" class="button" style="margin-top: 10px;" type="submit" title="<?php echo $this->__('Add') ?>" class="button" onclick="<?php echo $this->getUrl('ccgateway/cardmanagement/savecard'); ?>"><span><span><?php echo $this->__('Add') ?></span></span></button>
 

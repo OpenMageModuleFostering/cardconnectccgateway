@@ -37,16 +37,6 @@ class Cardconnect_Ccgateway_Block_Form extends Mage_Core_Block_Template{
         $this->setTemplate('ccgateway/cardmanagement/new.phtml');
     }
 
-    /**
-     * Retrieve Transaction Type
-     *
-     * @return string
-     */    
-    public function getCheckoutType(){
-        $type = Mage::getStoreConfig('payment/ccgateway/checkout_type');
-         
-        return $type;
-    }
 
 
     /**

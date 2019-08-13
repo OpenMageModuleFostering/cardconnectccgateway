@@ -29,7 +29,8 @@
   @copyright Copyright (c) 2014 CardConnect (http://www.cardconnect.com)
   @license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  */
-require_once('Mage/Customer/controllers/AccountController.php');
+
+require_once Mage::getModuleDir('controllers', 'Mage_Customer').DS.'AccountController.php';
 
 class Cardconnect_Ccgateway_CardmanagementController extends Mage_Customer_AccountController {
 

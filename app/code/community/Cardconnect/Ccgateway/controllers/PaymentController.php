@@ -66,7 +66,7 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
                 $session->setccgatewayQuoteId($session->getQuoteId());
             }
 
-            $checkoutType = Mage::getStoreConfig('payment/ccgateway/checkout_type');
+            $checkoutType = Mage::getModel('ccgateway/standard')->getConfigData('checkout_type' , $order->getStoreId());
 
             if ($checkoutType == "tokenized_post") {
                 $response = Mage::getModel('ccgateway/standard')->authService($order);
@@ -95,11 +95,12 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
 
     public function responseAction($response = "") {
 
-        $cc_action = Mage::getStoreConfig('payment/ccgateway/checkout_trans');
-        $merchid = Mage::getStoreConfig('payment/ccgateway/merchant');
         $session = $this->_getCheckout();
         $order = Mage::getModel('sales/order');
         $order->loadByIncrementId($session->getLastRealOrderId());
+        $cc_action = Mage::getModel('ccgateway/standard')->getConfigData('checkout_trans' , $order->getStoreId());
+        $merchid = Mage::getModel('ccgateway/standard')->getConfigData('merchant' , $order->getStoreId());
+
         $ccToken = "";
 
         if ($this->getRequest()->isPost()) {
@@ -159,9 +160,8 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
         if ($errorCode == 00) {
             $statCVV = true;            // false = Failure, true = Success
             $statAVS = true;            // false = Failure, true = Success
-            $voidOnAvs = Mage::getStoreConfig('payment/ccgateway/void_avs');
-            $voidOnCvv = Mage::getStoreConfig('payment/ccgateway/void_cvv');
-
+            $voidOnAvs = Mage::getModel('ccgateway/standard')->getConfigData('void_avs' , $order->getStoreId());
+            $voidOnCvv = Mage::getModel('ccgateway/standard')->getConfigData('void_cvv' , $order->getStoreId());
             // Check config setting if void on cvv is yes
             if ($voidOnCvv == 1) {
                 if ($cvvResp == "N") {

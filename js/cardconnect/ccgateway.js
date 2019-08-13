@@ -33,10 +33,10 @@ to license@magentocommerce.com so we can send you a copy immediately.
 function tokenize(cardNum , isTestMode) {
 
     document.getElementById("ccgateway_cc_number_org").disabled = true;
+    document.getElementById("response").innerHTML = "";
 
     // construct url
 	if(isTestMode == "yes"){
-	//	var url = "https://fts.cardconnect.com:6443/cardsecure/cs";
 		var url = "https://fts.prinpay.com:6443/cardsecure/cs";
 	}else{
 		var url = "https://fts.prinpay.com:8443/cardsecure/cs";
@@ -104,9 +104,6 @@ function processXMLHttpResponse() {
             var preResp = "************";
             var resp = response.substr(12);
             document.getElementById("ccgateway_cc_number_org").value = preResp + resp;
-            document.getElementById("ccgateway_expiration").disabled = false;
-            document.getElementById("ccgateway_expiration_yr").disabled = false;
-//            document.getElementById("ccgateway_cc_cid").disabled = false;
         } else {
             document.getElementById("response").classList.add('validation-advice');
             document.getElementById("response").innerHTML = response;
@@ -171,23 +168,24 @@ function parseXml(xmlStr) {
 function valid_credit_card(value, isTestMode)
 {
     startLoading();
-
-    document.getElementById("ccgateway_expiration").disabled = true;
-    document.getElementById("ccgateway_expiration_yr").disabled = true;
-//    document.getElementById("ccgateway_cc_cid").disabled = true;
     // The Luhn Algorithm. It's so pretty.
     var nCheck = 0, nDigit = 0, bEven = false;
-    if (value == null) {
-        alert("Please Fill the require field");
+    if (value == null || value == "") {
+       // alert("Please Fill the require field");
+        document.getElementById("testError").style.display = "block";
+	document.getElementById("testError").innerHTML = "Please Fill the require field.";
+	stopLoading();
+        return false;
     } else {
         var cardNum = value;
         value = value.replace(/\D/g, "");
+        document.getElementById("testError").style.display = "none";
     }
 
     for (var n = value.length - 1; n >= 0; n--)
     {
         var cDigit = value.charAt(n),
-                nDigit = parseInt(cDigit, 10);
+            nDigit = parseInt(cDigit, 10);
 
         if (bEven)
         {
@@ -202,11 +200,12 @@ function valid_credit_card(value, isTestMode)
         var cardType = GetCardType(cardNum);
         var e = document.getElementById("ccgateway_cc_type");
         var selectedCardType = e.options[e.selectedIndex].value;
-        if (cardType == selectedCardType && selectedCardType != null ) {
+        if (cardType == selectedCardType && selectedCardType != null && cardNum != null && cardNum.length >=12 ) {
             tokenize(cardNum , isTestMode);
             setTimeout(stopLoading, 1000);
         } else {
-            alert("Entered card information mismatched. Please try again.");
+            document.getElementById("testError").style.display = "block";
+            document.getElementById("testError").innerHTML = "Entered card information mismatched. Please try again.";
             document.getElementById("ccgateway_cc_number_org").value = "";
             document.getElementById("ccgateway_cc_number_org").focus();
             stopLoading();
@@ -214,8 +213,9 @@ function valid_credit_card(value, isTestMode)
         return;
     }
     else {
-        alert("Please Enter valid card data.");
-        document.getElementById("ccgateway_cc_number_org").value = "";
+        document.getElementById("testError").style.display = "block";
+        document.getElementById("testError").innerHTML = "Please Enter valid card data.";
+        //document.getElementById("ccgateway_cc_number_org").value = "";
         document.getElementById("ccgateway_cc_number_org").focus();
         stopLoading();
         return false;
@@ -314,14 +314,16 @@ function showAliseField(){
 }
 
 
-
 function callGetProfileWebserviceController( requestUrl, profile ){
-//alert(profile);
+
+
 
     if((profile != "Checkout with new card")){
 
+        startLoading();
         document.getElementById("ccgateway_cc_owner").readOnly = true;
-        document.getElementById("ccgateway_cc_number_org").readOnly = true;
+
+        document.getElementById("ccgateway_cc_number_org").disabled= true;
         document.getElementById("ccgateway_cc_number").readOnly = true;
         document.getElementById("ccgateway_cc_type").readOnly = true;
         document.getElementById("ccgateway_expiration").readOnly = true;
@@ -344,8 +346,12 @@ function callGetProfileWebserviceController( requestUrl, profile ){
                 month = month.replace(/^0+/, '');
                 var year = response[0].expiry.substr(2,4);
 
+
                 document.getElementById("ccgateway_cc_owner").value = response[0].name;
-                document.getElementById("ccgateway_cc_number_org").value = preResp+maskToken;
+                document.getElementById("ccgateway_cc_number_org").hide();
+                document.getElementById("cc_number_label").show();
+                document.getElementById("cc_number_label").innerHTML= preResp+maskToken;
+
                 document.getElementById("ccgateway_cc_number").value = response[0].token;
                 document.getElementById("ccgateway_cc_type").value = response[0].accttype;
                 document.getElementById("ccgateway_cc_owner").value = response[0].name;
@@ -355,35 +361,35 @@ function callGetProfileWebserviceController( requestUrl, profile ){
                 document.getElementById("save_card_4future").hide();
                 document.getElementById("payment_info").hide();
                 document.getElementById("payment_info1").hide();
-
+                stopLoading();
             }
         });
     }else{
 
-            document.getElementById("ccgateway_cc_owner").readOnly = false;
-            document.getElementById("ccgateway_cc_number_org").readOnly = false;
-            document.getElementById("ccgateway_cc_number").readOnly = false;
-            document.getElementById("ccgateway_cc_type").readOnly = false;
-            document.getElementById("ccgateway_expiration").readOnly = false;
-            document.getElementById("ccgateway_expiration_yr").readOnly = false;
-            document.getElementById("ccgateway_cc_cid").readOnly = false;
-            document.getElementById("ccgateway_cc_wallet").disabled = false;
+        document.getElementById("ccgateway_cc_number_org").style.display='block';
+        document.getElementById("cc_number_label").hide();
+        document.getElementById("ccgateway_cc_owner").readOnly = false;
+        document.getElementById("ccgateway_cc_number_org").disabled= false;
+        document.getElementById("ccgateway_cc_number").readOnly = false;
+        document.getElementById("ccgateway_cc_type").readOnly = false;
+        document.getElementById("ccgateway_expiration").readOnly = false;
+        document.getElementById("ccgateway_expiration_yr").readOnly = false;
+        document.getElementById("ccgateway_cc_cid").readOnly = false;
+        document.getElementById("ccgateway_cc_wallet").disabled = false;
 
-            document.getElementById("ccgateway_cc_owner").value = "";
-            document.getElementById("ccgateway_cc_number_org").value = "";
-            document.getElementById("ccgateway_cc_number").value = "";
-            document.getElementById("ccgateway_cc_type").value = "";
-            document.getElementById("ccgateway_expiration").value = "";
-            document.getElementById("ccgateway_expiration_yr").value = "";
-            document.getElementById("ccgateway_cc_cid").value = "";
-            document.getElementById("save_card_4future").show();
-            document.getElementById("payment_info").show();
-            document.getElementById("payment_info1").show();
+        document.getElementById("ccgateway_cc_owner").value = "";
+        document.getElementById("ccgateway_cc_number_org").value = "";
+        document.getElementById("ccgateway_cc_number").value = "";
+        document.getElementById("ccgateway_cc_type").value = "";
+        document.getElementById("ccgateway_expiration").value = "";
+        document.getElementById("ccgateway_expiration_yr").value = "";
+        document.getElementById("ccgateway_cc_cid").value = "";
+        document.getElementById("save_card_4future").show();
+        document.getElementById("payment_info").show();
+        document.getElementById("payment_info1").show();
 
     }
-
 }
-
 
 
 function showDefaultAddress(billingStreet,billingCity,billingRegion,billingCountry,billingPostCode,billingTelephone){
@@ -427,3 +433,13 @@ function stopLoading() {
     loaded = true;
     document.getElementById("fade").style.display = "none";
 }
+
+function resetcardinfo() {
+    document.getElementById("ccgateway_cc_number_org").value = "";
+    document.getElementById("ccgateway_cc_number_org").focus();
+    document.getElementById("ccgateway_cc_number").value = "";
+    document.getElementById("ccgateway_expiration").value = "";
+    document.getElementById("ccgateway_expiration_yr").value = "";
+    return false;
+}
+

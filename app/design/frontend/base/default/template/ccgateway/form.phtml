@@ -28,11 +28,23 @@
   @copyright Copyright (c) 2014 CardConnect (http://www.cardconnect.com)
   @license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  */
-if(Mage::getStoreConfig('payment/ccgateway/active')==1){
+if(Mage::getModel('ccgateway/standard')->getConfigData('active')==1){
 ?>
 <style>
 #fade{ width:100%; height:100%; background:rgba(0,0,0,0.1); position:fixed; top:0px; left:0px; display:none;}
 .loader{position:absolute; top:80%; left:50%;}
+
+.input-text {
+    -moz-appearance: none;
+    border-radius: 2px;
+    border: 1px solid #C0C0C0;
+    background: #FFF none repeat scroll 0% 0%;
+    font-size: 15px;
+    font-weight:300;
+    width: 365px;
+    font-family: "Helvetica Neue",Verdana,Arial,sans-serif;
+}
+
 </style>
 <fieldset class="form-list">
     <?php
@@ -49,7 +61,9 @@ if(Mage::getStoreConfig('payment/ccgateway/active')==1){
     $billingPostCode = $billingAddress->getPostcode();
     $billingTelephone = $billingAddress->getTelephone();
     ?>
-    <ul id="payment_form_<?php echo $_code ?>" style="display:none" >
+	
+    <ul id="payment_form_<?php echo $_code ?>" style="display:none">
+	
         <?php if ($this->getCheckoutType() == "payment_page") { ?>
             <li>
                 <?php echo Mage::helper('ccgateway')->__('You will be redirected to CardConnect website when you place an order.') ?>
@@ -62,8 +76,14 @@ if(Mage::getStoreConfig('payment/ccgateway/active')==1){
                 $response = $this->getDefaultCCProfileId();
 
 				if($response !="CardConnect_Error"){
-                $maskedToken = substr_replace($response[0]['token'], str_repeat("X", 12), 0, 12);
+                    if(isset($response[0]['token'])){
+                        $maskedToken = substr_replace($response[0]['token'], str_repeat("*", 12), 0, 12);
+
+                    }else{
+                        $maskedToken = "";
+                    }
                 ?>
+				
                 <li class="wide">
                     <label for="<?php echo $_code ?>_cc_profile_name" class="required"><em>*</em><?php echo $this->__('Choose Your Card For Payment') ?></label>
                     <div class="input-box">
@@ -71,7 +91,8 @@ if(Mage::getStoreConfig('payment/ccgateway/active')==1){
                             <option value=""><?php echo $this->__('--Please Select--') ?></option>
                             <?php foreach ($this->getCCProfileName() as $data): ?>
                                 <option value="<?php echo $data->getData('CC_PROFILEID'); ?>"
-                                <?php if ($data->getData('CC_PROFILEID') == $response[0]['profileid']) { ?>
+                                <?php $profileId = (isset($response[0]['profileid'])) ? $response[0]['profileid'] : null;
+                                if ($data->getData('CC_PROFILEID') === $profileId) { ?>
                                             selected="selected"
                                         <?php } ?> >
                                             <?php echo $data->getData('CC_CARD_NAME'); ?>
@@ -93,30 +114,40 @@ if(Mage::getStoreConfig('payment/ccgateway/active')==1){
                     <p class="required"><?php echo $this->__('* Required Fields') ?></p>
                     <label for="<?php echo $_code ?>_cc_owner" class="required"><em>*</em><?php echo $this->__('Name on Card') ?></label>
                     <div class="input-box">
-                        <input type="text"  title="<?php echo $this->__('Name on Card') ?>" class="input-text required-entry" id="<?php echo $_code ?>_cc_owner" name="payment[cc_owner]" value="<?php echo $response[0]['name']; ?>"  />
+                        <input type="text"  title="<?php echo $this->__('Name on Card') ?>" class="input-text required-entry" id="<?php echo $_code ?>_cc_owner" name="payment[cc_owner]"
+                               value="<?php echo $name = (isset($response[0]['name'])) ? $response[0]['name'] : null;  ?>"  />
                     </div>
                 </li>
                 <li>
                     <label for="<?php echo $_code ?>_cc_type" class="required validate-cc-type "><em>*</em><?php echo $this->__('Credit Card Type') ?></label>
-                    <div class="input-box">
+                    <div class="input-box" >
 
-                        <select readonly id="ccgateway_cc_type" name="payment[cc_type]"  title="<?php echo $this->__('Credit Card Type') ?>" class="required-entry validate-select">
+                        <select readonly id="ccgateway_cc_type" name="payment[cc_type]"  title="<?php echo $this->__('Credit Card Type') ?>" class="required-entry validate-select" onchange="resetcardinfo();">
                             <option value=""><?php echo $this->__('--Please Select--') ?></option>
-                            <?php foreach ($this->getCcTypes() as $ccType): ?>
-                                <option value="<?php echo $ccType['value']; ?>"<?php if ($ccType['value'] == $response[0]['accttype']): ?> selected="selected"<?php endif ?> ><?php echo $ccType['label']; ?></option>
+                            <?php $accttype = (isset($response[0]['accttype'])) ? $response[0]['accttype'] : null;
+                            foreach ($this->getCcTypes() as $ccType): ?>
+                                <option value="<?php echo $ccType['value']; ?>"<?php if ($ccType['value'] == $accttype ): ?> selected="selected"<?php endif ?> ><?php echo $ccType['label']; ?></option>
                             <?php endforeach ?>
                         </select>
                     </div>
                 </li>
             </div>
 
-            <li <?php if($response =="CardConnect_Error"){?> style="display: none;" <?php } ?>>
+            <li <?php if($response == "CardConnect_Error"){?> style="display: none;" <?php } ?>>
                 <label for="<?php echo $_code ?>_cc_number" class="required"><em>*</em><?php echo $this->__('Credit Card Number') ?></label>
                 <div class="input-box">
-                    <input type="text" onblur="valid_credit_card(value , '<?php echo $isTestMode; ?>')"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org');
-                                blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="payment[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="<?php echo $maskedToken; ?>" />
-                    <input type="hidden"   id="<?php // echo $_code    ?>ccgateway_cc_number" name="payment[cc_number]" title="<?php echo $this->__('Credit Card Number') ?>" class="input-text" value="<?php echo $response[0]['token']; ?>" />
+                    <?php if ($this->hasCCProfile() == true) { ?>
+                        <label id="cc_number_label" for="<?php echo $_code ?>_cc_number" class="input-text required-entry"><?php echo $maskedToken; ?></label>
 
+                        <input type="text" hidden onchange="valid_credit_card(value , '<?php echo $isTestMode; ?>')"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org'); blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="payment[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="<?php echo $maskedToken; ?>"  />
+
+                    <?php } else { ?>
+                        <input type="text" onchange="valid_credit_card(value , '<?php echo $isTestMode; ?>')"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org'); blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="payment[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="<?php echo $maskedToken; ?>"  />
+
+                    <?php } ?>
+                    <input type="text" hidden  id="ccgateway_cc_number" name="payment[cc_number]" title="<?php echo $this->__('Credit Card Number') ?>" class="input-text"
+                           value="<?php echo $token = (isset($response[0]['token'])) ? $response[0]['token'] : null; ?>" />
+                    <div class="validation-advice" id="testError" style="display: none;"></div>
                 </div>
 
             </li>
@@ -133,14 +164,14 @@ if(Mage::getStoreConfig('payment/ccgateway/active')==1){
                     <div class="input-box">
                         <div class="v-fix">
                             <select id="<?php echo $_code ?>_expiration" name="payment[cc_exp_month]" class="month validate-cc-exp required-entry">
-                                <?php $_ccExpMonth = substr(@$response[0]['expiry'], 0, 2); ?>
+                                <?php if (isset($response[0]['expiry'])){  $_ccExpMonth = substr($response[0]['expiry'], 0, 2); }  else { $_ccExpMonth = ""; } ?>
                                 <?php foreach ($this->getCcMonths() as $k => $v): ?>
                                     <option value="<?php echo $k ? $k : '' ?>"<?php if ($k == $_ccExpMonth): ?> selected="selected"<?php endif ?>><?php echo $v ?></option>
                                 <?php endforeach ?>
                             </select>
                         </div>
                         <div class="v-fix">
-                            <?php $_ccExpYear = substr($response[0]['expiry'], 2, 4); ?>
+                            <?php if (isset($response[0]['expiry'])){  $_ccExpYear = substr($response[0]['expiry'], 2, 4); }  else { $_ccExpYear = ""; } ?>
                             <select id="<?php echo $_code ?>_expiration_yr" name="payment[cc_exp_year]" class="year required-entry">
                                 <?php foreach ($this->getCcYears() as $k => $v): ?>
                                     <option value="<?php echo $k ? $k : '' ?>"<?php if ($k == "20" . $_ccExpYear): ?> selected="selected"<?php endif ?>><?php echo $v ?></option>

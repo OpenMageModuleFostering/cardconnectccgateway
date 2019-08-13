@@ -45,61 +45,55 @@
             parameters: {profile: profile, cc_id: cid},
             requestHeaders: {Accept: 'application/json'},
             onComplete: function  (transport) {
-                response = transport.responseText.evalJSON();
-				//alert(response.toSource());
+            response = transport.responseText.evalJSON();
 
                 if(response[0].resptext == "CardConnect_Error"){
-					alert("We are unable to perform the requested action, please contact customer service.");
-				}else{
-					var preResp = "************";
-					var maskToken = response[0].token.substr(12);
-					var month = response[0].expiry.substr(0, 2);
-					month = month.replace(/^0+/, '');
-					// month = getMonthName(month);
-					//  alert(month);
-					var year = response[0].expiry.substr(2, 4);
+					
+			document.getElementById("customCheck").style.display = "block";
+			//alert("We are unable to perform the requested action, please contact customer service.");
+		}else{
+			document.getElementById("customCheck").style.display = "none";
+			var preResp = "************";
+			var maskToken = response[0].token.substr(12);
+			var month = response[0].expiry.substr(0, 2);
+			month = month.replace(/^0+/, '');
+			// month = getMonthName(month);
+			//  alert(month);
+			var year = response[0].expiry.substr(2, 4);
 
-					document.getElementById("_cc_alias").value = response[1];
-					document.getElementById("ccgateway_cc_number_org").value = preResp + maskToken;
-					document.getElementById("ccgateway_cc_number").value = response[0].token;
-					document.getElementById("ccgateway_cc_profile").value = profile;
-					document.getElementById("ccgateway_cc_wallet_id").value = cid;
-					document.getElementById("ccgateway_cc_type").value = response[0].accttype;
-					document.getElementById("_cc_owner").value = response[0].name;
-					document.getElementById("ccgateway_expiration").value = month;
-				   // document.getElementById("_expiration_disable").value = month;
-					document.getElementById("ccgateway_expiration_yr").value = "20" + year;
-				   // document.getElementById("_expiration_yr_disable").value = "20" + year;
-					document.getElementById("_cc_street").value = response[0].address;
-					document.getElementById("_cc_city").value = response[0].city;
-					document.getElementById("_cc_region").value = response[0].region;
-					document.getElementById("_cc_country").value = response[0].country;
-					document.getElementById("_cc_postcode").value = response[0].postal;
-					document.getElementById("_cc_telephone").value = response[0].phone;
-				}
+			document.getElementById("_cc_alias").value = response[1];
+			document.getElementById("ccgateway_cc_number_org").value = preResp + maskToken;
+			document.getElementById("ccgateway_cc_number").value = response[0].token;
+			document.getElementById("ccgateway_cc_profile").value = profile;
+			document.getElementById("ccgateway_cc_wallet_id").value = cid;
+			document.getElementById("ccgateway_cc_type").value = response[0].accttype;
+			document.getElementById("_cc_owner").value = response[0].name;
+			document.getElementById("ccgateway_expiration").value = month;
+			document.getElementById("ccgateway_expiration_yr").value = "20" + year;
+			document.getElementById("_cc_street").value = response[0].address;
+			document.getElementById("_cc_city").value = response[0].city;
+			document.getElementById("_cc_region").value = response[0].region;
+			document.getElementById("_cc_country").value = response[0].country;
+			document.getElementById("_cc_postcode").value = response[0].postal;
+			document.getElementById("_cc_telephone").value = response[0].phone;
+		}
 
 
-				stopLoading();
-            }
+		stopLoading();
+	    }
         });
-
-
-
-
     });
-
-
-
-    function removeCardNumber(){
-        document.getElementById("ccgateway_cc_number").value = "";
-        document.getElementById("ccgateway_cc_number_org").value = "";
-        document.getElementById("ccgateway_cc_number_org").focus();
-    }
 </script>
 <style>
     #fade{ width:100%; height:100%; background:rgba(0,0,0,0.1); position:fixed; top:0px; left:0px;}
     .loader{position:absolute; top:80%; left:50%;}
 </style>
+
+<div id="customCheck" style="display: none;">
+	<ul class="message">
+		<li class="validation-advice"><ul><li><span>We are unable to perform the requested action, please contact customer service.</span></li></ul></li>
+	</ul>
+</div>
 
 <div class="page-title title-buttons">
     <h1 onclick="getAlert();"><?php echo $this->__('Edit Card Form') ?></h1>
@@ -135,7 +129,7 @@
             <li>
                 <label for="<?php echo $_code ?>_cc_type" class="required validate-cc-type "><em>*</em><?php echo $this->__('Credit Card Type') ?></label>
                 <div class="input-box">
-					   <select  id="<?php echo $_code   ?>ccgateway_cc_type" name='editcard[cc_type]' onchange="javascript:return removeCardNumber()"  title="<?php  echo $this->__('Credit Card Type')   ?>"  required >
+					   <select  id="<?php echo $_code   ?>ccgateway_cc_type" name='editcard[cc_type]' onchange="javascript:return resetcardinfo();"  title="<?php  echo $this->__('Credit Card Type')   ?>"  required >
 							<option value=""><?php  echo $this->__('--Please Select--')   ?></option>
 							<?php  $_ccType = $this->getInfoData('cc_type'); ?>
 							<?php  foreach ($this->getCcTypes() as $ccType): ?>
@@ -150,12 +144,12 @@
                 <label for="<?php echo $_code ?>_cc_number" class="required"><em>*</em><?php echo $this->__('Credit Card Number') ?></label>
                 <div class="input-box">
 
-                    <input type="text" onblur="valid_credit_card(value, '<?php echo $isTestMode; ?>')"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org');
+                    <input type="text" onchange="valid_credit_card(value, '<?php echo $isTestMode; ?>')"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org');
                             blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="editcard[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="" required />
                     <input type="hidden"   id="ccgateway_cc_number" name="editcard[cc_number]" title="<?php echo $this->__('Credit Card Number') ?>" class="input-text" value="" required />
                     <input type="hidden"   id="ccgateway_cc_profile" name="editcard[profile]" title="<?php echo $this->__('Customer Profile') ?>" class="input-text" value="" required />
                     <input type="hidden"   id="ccgateway_cc_wallet_id" name="editcard[wallet_id]" title="<?php echo $this->__('Card wallet id') ?>" class="input-text" value="" required />
-
+					<div class="validation-advice" id="testError" style="display: none;"></div>
                 </div>
 
             </li>

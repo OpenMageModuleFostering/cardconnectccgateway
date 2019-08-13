@@ -35,7 +35,7 @@ class Cardconnect_Ccgateway_Block_Form extends Mage_Payment_Block_Form
 
     protected function _construct()
     {
-        if(Mage::getStoreConfig('payment/ccgateway/active')==1){
+        if(Mage::getModel('ccgateway/standard')->getConfigData('active')==1){
             parent::_construct();
             $this->setTemplate('ccgateway/form.phtml');
         }
@@ -46,11 +46,11 @@ class Cardconnect_Ccgateway_Block_Form extends Mage_Payment_Block_Form
      *
      * @return string
      */
-    public function getCheckoutType()
-    {
-        $type = Mage::getStoreConfig('payment/ccgateway/checkout_type');
+    public function getCheckoutType(){
 
-        return $type;
+        $checkoutType = Mage::getModel('ccgateway/standard')->getConfigData('checkout_type');
+
+        return $checkoutType;
     }
 
     /**
@@ -60,7 +60,7 @@ class Cardconnect_Ccgateway_Block_Form extends Mage_Payment_Block_Form
      */
     public function isTransactionModeTest()
     {
-        $isTestMode = Mage::getStoreConfig('payment/ccgateway/test_mode');
+        $isTestMode = Mage::getModel('ccgateway/standard')->getConfigData('test_mode');
         switch ($isTestMode) {
             case 0:
                 $isTestMode = 'no';
@@ -92,11 +92,10 @@ class Cardconnect_Ccgateway_Block_Form extends Mage_Payment_Block_Form
      */
     public function getCcTypes()
     {
-
         $cc_types = new Cardconnect_Ccgateway_Adminhtml_Model_System_Config_Source_Cardtype();
         $types = $cc_types->toOptionArray();
 
-        $availableTypes = Mage::getStoreConfig('payment/ccgateway/card_type');
+        $availableTypes = Mage::getModel('ccgateway/standard')->getConfigData('card_type');
 
         if ($availableTypes) {
             $availableTypes = explode(',', $availableTypes);
@@ -201,6 +200,8 @@ class Cardconnect_Ccgateway_Block_Form extends Mage_Payment_Block_Form
 				$response = json_decode($resp, true);
 				if(isset($response[0]['resptext'])){
 					$response = "CardConnect_Error";
+                }else{
+                    $response = json_decode($resp, true);
 				}
 			}
         } else {

@@ -35,7 +35,7 @@ to license@magentocommerce.com so we can send you a copy immediately.
 <config>
     <modules>
         <Cardconnect_Ccgateway>
-            <version>1.0.1</version>
+            <version>1.0.4</version>
         </Cardconnect_Ccgateway>
     </modules>
     <global>
@@ -54,7 +54,7 @@ to license@magentocommerce.com so we can send you a copy immediately.
                 <class>Cardconnect_Ccgateway_Block</class>
             </ccgateway>
         </blocks>
-        
+
         <blocks>
             <adminhtml>
                 <rewrite>
@@ -71,8 +71,8 @@ to license@magentocommerce.com so we can send you a copy immediately.
                 </rewrite>
             </adminhtml>
         </blocks>
-     
-        
+
+
         <models>
             <ccgateway_adminhtml>
                 <class>Cardconnect_Ccgateway_adminhtml_Model</class>
@@ -98,35 +98,35 @@ to license@magentocommerce.com so we can send you a copy immediately.
             </cardconnect_ccgateway_resource>
         </models>
         <resources>
-            <cardconnect_ccgateway_setup> 
+            <cardconnect_ccgateway_setup>
                 <setup>
-                    <module>Cardconnect_Ccgateway</module>  
+                    <module>Cardconnect_Ccgateway</module>
                     <connection>
                         <use>core_setup</use>
-                    </connection> 
-                </setup>   
-            </cardconnect_ccgateway_setup>   
-            <cardconnect_ccgateway_write> 
-                <connection> 
-                    <use>core_write</use> 
+                    </connection>
+                </setup>
+            </cardconnect_ccgateway_setup>
+            <cardconnect_ccgateway_write>
+                <connection>
+                    <use>core_write</use>
                 </connection>
-            </cardconnect_ccgateway_write>  
+            </cardconnect_ccgateway_write>
             <cardconnect_ccgateway_read>
-                <connection> 
-                    <use>core_read</use> 
-                </connection> 
-            </cardconnect_ccgateway_read>    
+                <connection>
+                    <use>core_read</use>
+                </connection>
+            </cardconnect_ccgateway_read>
         </resources>
-		<events> 
+		<events>
 			<controller_action_postdispatch_checkout_onepage_savePayment>
 				<observers>
 					<ccgateway>
-						<type>model</type>	
+						<type>model</type>
 						<class>ccgateway/observer</class>
 						<method>savePaymentAction</method>
 					</ccgateway>
 				</observers>
-			</controller_action_postdispatch_checkout_onepage_savePayment>	
+			</controller_action_postdispatch_checkout_onepage_savePayment>
 		</events>
 
 		<sales>
@@ -237,7 +237,7 @@ to license@magentocommerce.com so we can send you a copy immediately.
                 </states>
 
 			</order>
-		</sales>		
+		</sales>
 
 	</global>
     <default>
@@ -281,8 +281,8 @@ to license@magentocommerce.com so we can send you a copy immediately.
                     </modules>
                 </args>
             </customer>
-        </routers>        
-    </frontend> 
+        </routers>
+    </frontend>
     <admin>
         <routers>
             <adminhtml>
@@ -294,7 +294,7 @@ to license@magentocommerce.com so we can send you a copy immediately.
             </adminhtml>
         </routers>
     </admin>
-    
+
     <adminhtml>
         <layout>
             <updates>
@@ -304,5 +304,16 @@ to license@magentocommerce.com so we can send you a copy immediately.
             </updates>
         </layout>
     </adminhtml>
-    
+
+    <default>
+        <payment>
+            <ccgateway>
+                <active>0</active>
+                <test>1</test>
+                <title>CardConnect</title>
+                <password backend_model="adminhtml/system_config_backend_encrypted"/>
+            </ccgateway>
+        </payment>
+    </default>
+
 </config>
