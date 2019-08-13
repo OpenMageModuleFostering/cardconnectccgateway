@@ -331,9 +331,9 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
         }
 
         if ($checkout_trans == "authorize_capture") {
-            $captureStatus = 1;
+            $captureStatus = "Y";
         } else {
-            $captureStatus = 0;
+            $captureStatus = "N";
         }
 
         if (strlen($ccExpiry) < 4) {
