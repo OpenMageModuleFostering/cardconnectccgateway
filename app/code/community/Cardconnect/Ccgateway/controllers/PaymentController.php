@@ -260,7 +260,8 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
         $session = $this->_getCheckout();
         $order = Mage::getModel('sales/order');
         $order->loadByIncrementId($session->getLastRealOrderId());
-        $session = $this->_getCheckout();
+
+        Mage::helper('ccgateway')->cancelCcOrder($order);
         if ($quoteId = $session->getCcgatewayQuoteId()) {
             $quote = Mage::getModel('sales/quote')->load($quoteId);
             if ($quote->getId()) {

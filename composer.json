@@ -3,11 +3,11 @@
     "type": "magento-module",
     "license": "OSL-v3.0",
     "homepage": "",
-    "description": "Avis Verifies vous permet de recolter l&amp;amp;apos;avis des clients sur votre site ecommerce.",
+    "description": "Extension provides the ability for merchants to process through the CardConnect Gateway. ",
     "authors": [
     {
-        "name": "Johnny",
-        "email": "johnny@verified-reviews.com"
+        "name": "AgileNova",
+        "email": "matt.wixson@agilenova.com"
     }
 ],
     "suggest": {

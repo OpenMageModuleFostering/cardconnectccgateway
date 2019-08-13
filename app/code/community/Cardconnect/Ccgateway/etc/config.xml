@@ -35,7 +35,7 @@ to license@magentocommerce.com so we can send you a copy immediately.
 <config>
     <modules>
         <Cardconnect_Ccgateway>
-            <version>1.0.5</version>
+            <version>1.0.6.1</version>
         </Cardconnect_Ccgateway>
     </modules>
     <global>
@@ -127,6 +127,15 @@ to license@magentocommerce.com so we can send you a copy immediately.
 					</ccgateway>
 				</observers>
 			</controller_action_postdispatch_checkout_onepage_savePayment>
+            <sales_order_place_after>
+                <observers>
+                    <ccgateway>
+                        <type>singleton</type>
+                        <class>ccgateway/observer</class>
+                        <method>implementOrderStatus</method>
+                    </ccgateway>
+                </observers>
+            </sales_order_place_after>
 		</events>
 
 		<sales>

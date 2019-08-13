@@ -48,6 +48,47 @@ class Cardconnect_Ccgateway_Model_Observer
         return;
     }
 
+    public function implementOrderStatus($event)
+    {
+        $order = $event->getOrder();
+
+        $checkout_trans = Mage::getModel('ccgateway/standard')->getConfigData('checkout_trans', $order->getStoreId());
+        if ($checkout_trans == "authorize_capture") {
+            if ($this->_getPaymentMethod($order) == 'ccgateway') {
+                if ($order->canInvoice())
+                    $this->_processOrderStatus($order);
+            }
+        }
+
+        return $this;
+    }
+
+    private function _getPaymentMethod($order)
+    {
+        return $order->getPayment()->getMethodInstance()->getCode();
+    }
+
+    private function _processOrderStatus($order)
+    {
+        $invoice = $order->prepareInvoice();
+        $invoice->register()->capture();
+        Mage::getModel('core/resource_transaction')
+            ->addObject($invoice)
+            ->addObject($invoice->getOrder())
+            ->save();
+
+        $invoice->sendEmail(true, '');
+        $this->_changeOrderStatus($order);
+        return true;
+    }
+
+    private function _changeOrderStatus($order)
+    {
+        $statusMessage = '';
+        $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, true);
+        $order->save();
+    }
+
 
 }
 

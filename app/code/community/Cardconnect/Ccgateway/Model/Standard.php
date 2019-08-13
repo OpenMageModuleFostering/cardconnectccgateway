@@ -399,15 +399,20 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
 
                 // Save Partial Authorization Response data
                 $this->saveResponseData($response);
-                // Set custom order status
-                $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_processing', $response['resptext'])->save();
+                if($response['respcode']==00){
+                    // Set custom order status
+                    $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_processing', $response['resptext'])->save();
+                }else{
+                    $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_reject', $response['resptext'])->save();
+                    $response= array('resptext' => "CardConnect_Error");
+                }
             }
         } else {
             $myLogMessage = "CC Authorization : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
             Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
 
             // Set custom order status
-            $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_reject', "Invalid response from CardConnect.")->save();
+            $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_reject', "Invalid response from CardConnect.")->save();
             $response= array('resptext' => "CardConnect_Error");
 
         }
@@ -544,14 +549,14 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
 
             if (empty($action)) {
                 // Set custom order status
-                $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_void', $response['resptext'])->save();
+                $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_void', $response['resptext'])->save();
             }
         } else {
             $myLogMessage = "CC Void : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
             Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
 
             // Set custom order status
-            $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_reject', "Invalid response from CardConnect.")->save();
+            $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_reject', "Invalid response from CardConnect.")->save();
 
             $errorMsg = "Unable to perform operation.  Please consult the Magento log for additional information.";
             Mage::throwException($errorMsg);

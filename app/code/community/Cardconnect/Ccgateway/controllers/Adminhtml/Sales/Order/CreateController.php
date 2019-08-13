@@ -83,18 +83,17 @@ class Cardconnect_Ccgateway_Adminhtml_Sales_Order_CreateController extends Mage_
                     ->setIsValidate(true)
                     ->importPostData($this->getRequest()->getPost('order'))
                     ->createOrder();
-            
-            /* Check Payment Method for Authorization on Reorder     */        
-            $payment_method_code = $order->getPayment()->getMethodInstance()->getCode();
 
+            /* Check Payment Method for Authorization on Reorder     */
+            $payment_method_code = $order->getPayment()->getMethodInstance()->getCode();
+            $this->_getSession()->clear();
+
+            // make payment if payment method is ccgateway
             if (!empty($order) && $payment_method_code == "ccgateway") {
-                $amount = number_format($order->getBaseGrandTotal(), 2, '.', '');
-                Mage::getModel('ccgateway/standard')->authService($order, $amount, "authFull");
+                $this->makeCcPayment($order);
             }
 
 
-            $this->_getSession()->clear();
-            Mage::getSingleton('adminhtml/session')->addSuccess($this->__('The order has been created.'));
             if (Mage::getSingleton('admin/session')->isAllowed('sales/order/actions/view')) {
                 $this->_redirect('*/sales_order/view', array('order_id' => $order->getId()));
             } else {
@@ -118,5 +117,61 @@ class Cardconnect_Ccgateway_Adminhtml_Sales_Order_CreateController extends Mage_
             $this->_redirect('*/*/');
         }
     }
+
+
+    /**
+     * Call authorization service and check AVS, CVV fails check
+     */
+
+    protected function makeCcPayment($order){
+        $amount = number_format($order->getBaseGrandTotal(), 2, '.', '');
+        $response = Mage::getModel('ccgateway/standard')->authService($order, $amount, "authFull");
+        $errorStat = $response['respproc'] . $response['respcode'];
+
+        if($response['resptext']=="CardConnect_Error"){
+            // Cancel the order if authorization service fails
+            Mage::helper('ccgateway')->cancelCcOrder($order);
+            $errorMsg = Mage::helper('ccgateway')->matchResponseError($errorStat);
+            // Set custom order status
+            $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_reject', $errorMsg)->save();
+            Mage::getSingleton('adminhtml/session')->addError(Mage::helper('ccgateway')->__('We are unable to perform the requested action, please contact customer service.'));
+        }else{
+            $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_processing', 'Gateway has authorized the payment.');
+            $autoVoidStatus = Mage::helper('ccgateway')->checkAutoVoidStatus($order, $response['avsresp'], $response['cvvresp']);
+            if (($autoVoidStatus["STATUS_AVS"] && $autoVoidStatus["STATUS_CVV"]) == false) {
+                $voidResponse = Mage::getModel('ccgateway/standard')->voidService($order);
+                if($voidResponse['respcode'] == '00' ){
+                    // Cancel the order if Auto void success
+                    Mage::helper('ccgateway')->cancelCcOrder($order);
+
+                    $errorMsg = "";
+                    if ($autoVoidStatus["STATUS_ERROR"] == "CVV") {
+                        Mage::getSingleton('adminhtml/session')->addError(Mage::helper('ccgateway')->__('Error - Invalid cvv , Please check cvv information,which is entered on payment page.'));
+                        $errorMsg = "CVV does not match.";
+                        $myLogMessage = "CC Admin Authorization : ". __FILE__ . " @ " . __LINE__ ."  Auto voided the transaction Due to CVV NO MATCH";
+                        Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
+                    } elseif ($autoVoidStatus["STATUS_ERROR"] == "AVS") {
+                        Mage::getSingleton('adminhtml/session')->addError(Mage::helper('ccgateway')->__('Error - Please check billing information , try again.'));
+                        $errorMsg = "AVS does not match.";
+                        $myLogMessage = "CC Admin Authorization : ". __FILE__ . " @ " . __LINE__ ."  Auto voided the transaction Due to AVS NO MATCH";
+                        Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
+                    } else {
+                        $errorMsg = Mage::helper('ccgateway')->matchResponseError($errorStat);
+                        $myLogMessage = "CC Admin Authorization : ". __FILE__ . " @ " . __LINE__ ."  ".$errorStat . " :- " . $errorMsg;
+                        Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
+                    }
+                }
+                $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_reject', $errorMsg)->save();
+
+            }else{
+                Mage::getSingleton('adminhtml/session')->addSuccess($this->__('The order has been created.'));
+                $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_processing', "Successfully order placed via CardConnect.")->save();
+            }
+
+        }
+
+    }
+
+
 
 }
