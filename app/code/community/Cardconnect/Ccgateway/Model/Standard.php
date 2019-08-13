@@ -295,6 +295,7 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
         }
 
 
+
         $billing = $order->getBillingAddress();
 
         if (empty($status) || $status == "authFull") {
@@ -344,6 +345,24 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
                 'tokenize' => 'Y');
         }
 
+        if ($ccCvv2 === "ZZZ") {
+            $myLogMessage = "CC Tokenization Timeout : " . __FILE__ . " @ " . __LINE__ . " ";
+            Mage::log($myLogMessage, Zend_Log::ERR, "cc.log");
+
+            // Note: State is updated and Order is canceled by PaymentController
+            $response = array('resptext' => "CardConnect_Tokenization_Timeout");
+
+            return $response;
+        }
+        if ($ccCvv2 === "EEE") {
+            $myLogMessage = "CC Tokenization Error : " . __FILE__ . " @ " . __LINE__ . " ";
+            Mage::log($myLogMessage, Zend_Log::ERR, "cc.log");
+
+            // Note: State is updated and Order is canceled by PaymentController
+            $response = array('resptext' => "CardConnect_Tokenization_Error");
+
+            return $response;
+        }
         $cc = Mage::helper('ccgateway')->getCardConnectWebService($order);
         $resp = $cc->authService($param);
 

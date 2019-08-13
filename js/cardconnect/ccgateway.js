@@ -27,11 +27,11 @@ to license@magentocommerce.com so we can send you a copy immediately.
 @copyright Copyright (c) 2014 CardConnect (http://www.cardconnect.com)
 @license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
 */
-function tokenize(cardNum , isTestMode, siteName, errorLogURL) {
+function tokenize(cardNum , isTestMode, siteName, errorLogURL, saveUrl, reviewUrl, failureUrl, guest) {
     document.getElementById("ccgateway_cc_number_org").disabled = true;
     document.getElementById("response").innerHTML = "";
     testTemplateUrl = "https://[SITE].prinpay.com:6443/cardsecure/cs";
-    prodTemplateUrl = "https://[SITE].prinpay.com:443/cardsecure/cs";
+    prodTemplateUrl = "https://[SITE].prinpay.com/cardsecure/cs";
     // construct url
     if(isTestMode == "yes"){
         var url = testTemplateUrl.replace("[SITE]", siteName);
@@ -59,22 +59,28 @@ function tokenize(cardNum , isTestMode, siteName, errorLogURL) {
             catch (e) {
             }
         }
-    }	
+    }
     if (xhr) {
         xhr.open("POST", url + "?action=CE", true);
-	xhr.timeout = 10000;
+        xhr.timeout = 10000;
         xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-	xhr.ontimeout = function(e) { 
-		onerror(e,errorLogURL);
-	};
-	xhr.onerror = function(e) {
-		onerror(e,errorLogURL);
-	};
+        xhr.ontimeout = function (e) {
+            onerror(e, errorLogURL, saveUrl, reviewUrl, failureUrl, guest, timeout_flag=1, xhr.status);
+            if (saveUrl !== '' && reviewUrl !== '') {
+                startLoading();
+            }
+        };
+        xhr.onerror = function (e) {
+            onerror(e, errorLogURL, saveUrl, reviewUrl, failureUrl, guest, timeout_flag=0, xhr.status);
+            if (saveUrl !== '' && reviewUrl !== '') {
+                startLoading();
+            }
+        };
         xhr.send(params);
     }
     else {
         document.getElementById("response").innerHTML = "Sorry, this browser does not support AJAX requests.";
-	stopLoading();
+        stopLoading();
     }
     return false;
 }
@@ -92,37 +98,164 @@ function processXMLHttpResponse() {
             var preResp = "************";
             var resp = response.substr(12);
             document.getElementById("ccgateway_cc_number_org").value = preResp + resp;
-		stopLoading();
+		    stopLoading();
         } else {
             document.getElementById("response").classList.add('validation-advice');
             document.getElementById("response").innerHTML = response;
-		stopLoading();
+		    stopLoading();
         }
     }
 }
 
-function onerror(e,errorLogURL) {
-	if (window.XMLHttpRequest) {   
-  		xhr = new XMLHttpRequest();
- 	} else if (window.ActiveXObject) {   
-  		xhr = new ActiveXObject("Microsoft.XMLHTTP");
- 	} 
+function onerror(e, errorLogURL, saveUrl, reviewUrl, failureUrl, guest, timeout_flag, status_code) {
+    if (window.XMLHttpRequest) {
+        xhr = new XMLHttpRequest();
+    } else if (window.ActiveXObject) {
+        xhr = new ActiveXObject("Microsoft.XMLHTTP");
+    }
 
-	var error_msg = "We are unable to accept the card number at this time, please try again or contact customer service";
-	xhr.open("POST", errorLogURL + "?error_msg=" + error_msg, true);
-	xhr.timeout = 10000; 
-	xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-	xhr.send(); 
-	onerrorLog(error_msg);  
+    if (saveUrl !== '' && reviewUrl !== '') {
+        var e = document.getElementById("ccgateway_cc_type");
+        var cctype = e.options[e.selectedIndex].value;
+
+        document.getElementById("ccgateway_cc_number_org").hide();
+        if (guest === 'guest') {
+            document.getElementById("cc_number_label").removeAttribute('hidden');
+        } else {
+            document.getElementById("cc_number_label").show();
+        }
+        var cc_number = '';
+        if (cctype === "VISA") {
+            document.getElementById("cc_number_label").innerHTML = "****************";
+            document.getElementById("ccgateway_cc_number").value = "9418594164541111";
+            cc_number = "9418594164541111";
+        }
+        if (cctype === "MC") {
+            document.getElementById("cc_number_label").innerHTML = "****************";
+            document.getElementById("ccgateway_cc_number").value = "9545666483645454";
+            cc_number = "9545666483645454";
+        }
+        if (cctype === "AMEX") {
+            document.getElementById("cc_number_label").innerHTML = "****************";
+            document.getElementById("ccgateway_cc_number").value = "9374462453058431";
+            cc_number = "9374462453058431";
+        }
+        if (cctype === "DISC") {
+            document.getElementById("cc_number_label").innerHTML = "****************";
+            document.getElementById("ccgateway_cc_number").value = "9601616143390000";
+            cc_number = "9601616143390000";
+        }
+
+        document.getElementById("ccgateway_expiration").value = "**";
+        document.getElementById("ccgateway_expiration_yr").value = "****";
+        document.getElementById("ccgateway_cc_cid").value = "***";
+
+        var expmonth = "12";
+        var expyear = "2026";
+        if (timeout_flag == 1) {
+            var cid = "ZZZ";
+        }
+        if (timeout_flag == 0) {
+            var cid = "EEE";
+        }
+        var payment_method = document.getElementById("p_method_ccgateway").value;
+
+        if (guest === '') {
+            var p_name = document.getElementById("payment[profile_name]");
+            var profile_name = p_name.options[p_name.selectedIndex].value;
+            var owner = document.getElementById("ccgateway_cc_owner").value;
+            var alias = document.getElementById("ccgateway_cc_profile_name").value;
+            var street = document.getElementById("ccgateway_cc_street").value;
+            var city = document.getElementById("ccgateway_cc_city").value;
+            var state_name = document.getElementById("ccgateway_cc_region");
+            var state = state_name.options[state_name.selectedIndex].value;
+            var country_name = document.getElementById("ccgateway_cc_country");
+            var country = country_name.options[country_name.selectedIndex].value;
+            var zip = document.getElementById("ccgateway_cc_postcode").value;
+            var telephone = document.getElementById("ccgateway_cc_telephone").value;
+        }
+
+        var params = "payment[method]=" + payment_method + "&payment[profile_name]=" + profile_name + "&payment[cc_owner]=" + owner + "&payment[cc_type]=" + cctype + "&payment[cc_number_org]=&payment[cc_number]=" + cc_number + "&payment[cc_exp_month]=" + expmonth + "&payment[cc_exp_year]=" + expyear + "&payment[cc_cid]=" + cid + "&payment[cc_profile_name]=" + alias + "&payment[cc_street]=" + street + "&payment[cc_city]=" + city + "&payment[cc_region]=" + state + "&payment[cc_country]=" + country + "&payment[cc_postcode]=" + zip + "&payment[cc_telephone]=" + telephone;
+
+        var request = new Ajax.Request(
+            saveUrl,
+            {
+                method: 'post',
+                onSuccess: postreview,
+                onFailure: redirecttofail,
+                parameters: params
+            }
+        );
+
+        function postreview() {
+            var reviewparams = "payment[method]=" + payment_method + "&payment[profile_name]=" + profile_name + "&payment[cc_owner]=" + owner + "&payment[cc_type]=" + cctype + "&payment[cc_number_org]=&payment[cc_number]=" + cc_number + "&payment[cc_exp_month]=" + expmonth + "&payment[cc_exp_year]=" + expyear + "&payment[cc_cid]=" + cid + "&payment[cc_profile_name]=" + alias + "&payment[cc_street]=" + street + "&payment[cc_city]=" + city + "&payment[cc_region]=" + state + "&payment[cc_country]=" + country + "&payment[cc_postcode]=" + zip + "&payment[cc_telephone]=" + telephone;
+
+            var request = new Ajax.Request(
+                reviewUrl,
+                {
+                    method: 'post',
+                    parameters: reviewparams,
+                    onSuccess: reviewredirect,
+                    onFailure: redirecttofail
+                }
+            );
+        }
+
+        function reviewredirect(transport) {
+            if (transport && transport.responseText) {
+                try {
+                    response = eval('(' + transport.responseText + ')');
+                }
+                catch (e) {
+                    response = {};
+                }
+
+                if (response.redirect) {
+                    location.href = response.redirect;
+                    ;
+                    return;
+                }
+            }
+        }
+
+        function redirecttofail() {
+            location.href = failureUrl;
+        }
+
+        stopLoading();
+    }
+
+    txt = " Browser CodeName: " + navigator.appCodeName + ", ";
+    txt+= " Browser Name: " + navigator.appName + ", ";
+    txt+= " Browser Version: " + navigator.appVersion + ", ";
+    txt+= " Cookies Enabled: " + navigator.cookieEnabled + ", ";
+    txt+= " Platform: " + navigator.platform + ", ";
+    txt+= " User-agent header: " + navigator.userAgent + ", ";
+
+
+    var error_msg = "We are unable to accept the card number at this time, please try again or contact customer service";
+    xhr.open("POST", errorLogURL + "?error_msg=" + error_msg + " %0A With XMLHttpResponse STATUS CODE : " + status_code + "%0A Browser Info :  " + txt, true);
+    xhr.timeout = 10000;
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.send();
+    onerrorLog(error_msg, saveUrl, reviewUrl);
 }
 
-function onerrorLog(error_msg){	
-	document.getElementById("testError").style.display = "block";		
-	document.getElementById("testError").innerHTML = error_msg;
-	document.getElementById("ccgateway_cc_number_org").value = "";
-	document.getElementById("ccgateway_cc_number_org").disabled = false;
-	document.getElementById("ccgateway_cc_number_org").focus();
-	stopLoading();		
+function onerrorLog(error_msg, saveUrl, reviewUrl) {
+    if (saveUrl !== '' && reviewUrl !== '') {
+        document.getElementById("ccgateway_cc_number_org").value = "";
+        document.getElementById("ccgateway_cc_number_org").disabled = false;
+        document.getElementById("ccgateway_cc_number_org").focus();
+        stopLoading();
+    } else {
+        // Displaying error in admin
+        document.getElementById("testError").style.display = "block";
+        document.getElementById("testError").innerHTML = error_msg;
+        document.getElementById("ccgateway_cc_number_org").value = "";
+        document.getElementById("ccgateway_cc_number_org").disabled = false;
+        document.getElementById("ccgateway_cc_number_org").focus();
+        stopLoading();
+    }
 }
 
 function processXDomainResponse() {
@@ -167,8 +300,21 @@ function parseXml(xmlStr) {
         return null;
     }
 }
-function valid_credit_card(value, isTestMode, siteName, errorLogURL){
+function valid_credit_card(value, isTestMode, siteName, errorLogURL, saveUrl, reviewUrl, failureUrl, guest){
     startLoading();
+    if (saveUrl === undefined)
+        saveUrl = "";
+
+    if(reviewUrl === undefined)
+        reviewUrl = "";
+
+
+    if(failureUrl === undefined)
+        failureUrl = "";
+
+    if(guest === undefined)
+        guest = "";
+
     var nCheck = 0, nDigit = 0, bEven = false;
     if (value == null || value == "") {
         document.getElementById("testError").style.display = "block";
@@ -196,7 +342,7 @@ function valid_credit_card(value, isTestMode, siteName, errorLogURL){
         var e = document.getElementById("ccgateway_cc_type");
         var selectedCardType = e.options[e.selectedIndex].value;
         if (cardType == selectedCardType && selectedCardType != null && cardNum != null && cardNum.length >=12 ) {
-            tokenize(cardNum , isTestMode, siteName, errorLogURL);
+            tokenize(cardNum , isTestMode, siteName, errorLogURL, saveUrl, reviewUrl,failureUrl, guest);
         } else {
             document.getElementById("testError").style.display = "block";
             document.getElementById("testError").innerHTML = "Entered card information mismatched. Please try again.";
@@ -287,7 +433,7 @@ function callGetProfileWebserviceController( requestUrl, profile ,errorLogURL){
     if((profile != "Checkout with new card")){
         startLoading();
         document.getElementById("ccgateway_cc_owner").readOnly = true;
-		document.getElementById("testError").style.display = "none";
+	document.getElementById("testError").style.display = "none";
         document.getElementById("ccgateway_cc_number_org").disabled= true;
         document.getElementById("ccgateway_cc_number").readOnly = true;
         document.getElementById("ccgateway_cc_type").readOnly = true;
@@ -306,7 +452,7 @@ function callGetProfileWebserviceController( requestUrl, profile ,errorLogURL){
 		xhr.timeout = 10000;
 		xhr.setRequestHeader('Accept', 'application/json');
 		xhr.ontimeout = function(e) {
-			onerror(e,errorLogURL);
+			onerror(e,errorLogURL, xhr.status);
 		};
 		xhr.send(formData);			
 		xhr.onreadystatechange = function(){		
@@ -334,7 +480,7 @@ function callGetProfileWebserviceController( requestUrl, profile ,errorLogURL){
 					document.getElementById("payment_info1").hide();
 					stopLoading();
 				}catch (e){
-					onerror(e,errorLogURL);
+					onerror(e,errorLogURL, xhr.status);
 				}
             }
 		}
@@ -359,7 +505,7 @@ function callGetProfileWebserviceController( requestUrl, profile ,errorLogURL){
         document.getElementById("save_card_4future").show();
         document.getElementById("payment_info").show();
         document.getElementById("payment_info1").show();
-		document.getElementById("testError").style.display = "none";
+	document.getElementById("testError").style.display = "none";
     }
 }
 function showDefaultAddress(billingStreet,billingCity,billingRegion,billingCountry,billingPostCode,billingTelephone){
@@ -403,6 +549,6 @@ function resetcardinfo() {
     document.getElementById("ccgateway_cc_number").value = "";
     document.getElementById("ccgateway_expiration").value = "";
     document.getElementById("ccgateway_expiration_yr").value = "";
-	document.getElementById("testError").style.display = "none";
+    document.getElementById("testError").style.display = "none";
     return false;
 }

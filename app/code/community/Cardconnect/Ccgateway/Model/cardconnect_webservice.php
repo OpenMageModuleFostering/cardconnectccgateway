@@ -118,8 +118,16 @@ class CardConnectWebService
         $headers = array("Content-Type: application/json", "Accept: application/json");
 
         if (function_exists('curl_init')) {
+            $var_dir = Mage::getBaseDir('var');
+            $fp = fopen( $var_dir . "/log/cc_curl.log", "a+");
+
+            fwrite($fp,  "\n\n TRANSACTION INPUT : \n -------------------------- \n" . $postString . "\n\n");
+
             $curl = curl_init();
             curl_setopt($curl, CURLOPT_URL, $url);
+            curl_setopt($curl, CURLOPT_VERBOSE, 1);
+            curl_setopt($curl, CURLOPT_FILE, $fp);
+            curl_setopt($curl, CURLOPT_STDERR, $fp);
             curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($curl, CURLOPT_HEADER, 0);
             curl_setopt($curl, CURLOPT_USERPWD, $this->userName . ":" . $this->passWord);
@@ -139,7 +147,16 @@ class CardConnectWebService
             $curlerrno = curl_errno($curl);
             $curlerrdesc = curl_error($curl);
 
+            fwrite($fp,  "\n\n TRANSACTION OUTPUT: \n -------------------------- \n" . $result . "\n\n");
+
+            $cinfo = json_encode($info);
+            fwrite($fp, "\n\n Curl Info : \n -------------------------- \n" .$cinfo);
+            fwrite($fp, "\n\n Curl Errorno : \n -------------------------- \n" .$curlerrno);
+            fwrite($fp, "\n\n Curl Description : \n -------------------------- \n" .$curlerrdesc);
+
             curl_close($curl);
+
+            fclose($fp);
 
             if ($info['http_code'] != "200") {
                 $this->lasterror = "ERROR ";

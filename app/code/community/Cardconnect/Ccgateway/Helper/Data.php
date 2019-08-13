@@ -90,7 +90,7 @@ class Cardconnect_Ccgateway_Helper_Data extends Mage_Payment_Helper_Data {
      *  Get Frontend Id
      */
     public function getFrontendId(){
-        $frontendId = 'Magento';
+        $frontendId = "10";
 
         return $frontendId;
     }

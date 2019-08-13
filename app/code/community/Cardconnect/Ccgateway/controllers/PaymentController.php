@@ -84,6 +84,23 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
                     $session = $this->_getCheckout();
                     $session->addError(Mage::helper('ccgateway')->__($errorMsg));
                     $this->_redirect('checkout/cart');
+                } else if ($response['resptext'] == "CardConnect_Tokenization_Timeout") {
+                    $errorStat = "ZZZ"; //ZZZ is for Tokenization Timed Out error
+                    $errorMsg = "We were unable to complete the requested operation at this time.  Please try again later or contact customer service.";
+                    $this->responseCancel($errorStat);
+
+                    $session = $this->_getCheckout();
+                    $session->addError(Mage::helper('ccgateway')->__($errorMsg));
+                    $this->_redirect('checkout/cart');
+                } else if ($response['resptext'] == "CardConnect_Tokenization_Error") {
+                    $errorStat = "EEE"; //EEE is for Tokenization error
+                    
+                    $errorMsg = "We were unable to complete the requested operation at this time.  Please try again later or contact customer service.";
+                    $this->responseCancel($errorStat);
+
+                    $session = $this->_getCheckout();
+                    $session->addError(Mage::helper('ccgateway')->__($errorMsg));
+                    $this->_redirect('checkout/cart');
                 } else {
                     $this->responseAction($response);
                 }
@@ -314,6 +331,12 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
         } elseif ($errorStat == "PPS62") {
             $errorMsg = "Timeout error response from CardConnect.";
             Mage::log("Error - Order process is timed out , try again.", Zend_Log::ERR , "cc.log");
+        } elseif ($errorStat == "ZZZ") {
+            $errorMsg = "Tokenization Timeout error response from CardConnect.";
+            Mage::log("Creating canceled order due to tokenization failure.", Zend_Log::ERR , "cc.log");
+        } elseif ($errorStat == "EEE") {
+            $errorMsg = "Tokenization error response from CardConnect.";
+            Mage::log("Creating canceled order due to tokenization failure.", Zend_Log::ERR , "cc.log");
         } else {
             $errorMsg = Mage::helper('ccgateway')->matchResponseError($errorStat);
             Mage:: log($errorStat . " :- " . $errorMsg, Zend_Log::ERR , "cc.log");

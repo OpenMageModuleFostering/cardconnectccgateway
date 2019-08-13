@@ -62,6 +62,7 @@ if(Mage::getModel('ccgateway/standard')->getConfigData('active')==1){
     $billingPostCode = $billingAddress->getPostcode();
     $billingTelephone = $billingAddress->getTelephone();
     $errorLogURL = Mage::getUrl('ccgateway/log/logfrontenderrors',array('_secure'=>true));
+
     ?>
 
     <ul id="payment_form_<?php echo $_code ?>" style="display:none">
@@ -142,10 +143,12 @@ if(Mage::getModel('ccgateway/standard')->getConfigData('active')==1){
                     <?php if ($this->hasCCProfile() == true) { ?>
                         <label id="cc_number_label" for="<?php echo $_code ?>_cc_number" class="input-text required-entry"><?php echo $maskedToken; ?></label>
 
-                            <input type="text" hidden onchange="valid_credit_card(value , '<?php echo $isTestMode; ?>', '<?php echo $siteName; ?>', '<?php echo $errorLogURL; ?>' )"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org'); blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="payment[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="<?php echo $maskedToken; ?>"  />
+                            <input type="text" hidden onchange="valid_credit_card(value , '<?php echo $isTestMode; ?>', '<?php echo $siteName; ?>', '<?php echo $errorLogURL; ?>' , '<?php echo $this->getUrl('checkout/onepage/savePayment') ?>', '<?php echo $this->getUrl('checkout/onepage/saveOrder', array('form_key' => Mage::getSingleton('core/session')->getFormKey())) ?>', '<?php echo $this->getUrl('checkout/cart') ?>')"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org'); blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="payment[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="<?php echo $maskedToken; ?>"  />
 
                         <?php } else { ?>
-                            <input type="text" onchange="valid_credit_card(value , '<?php echo $isTestMode; ?>', '<?php echo $siteName; ?>', '<?php echo $errorLogURL; ?>')"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org'); blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="payment[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="<?php echo $maskedToken; ?>"  />
+                        <label id="cc_number_label" hidden for="<?php echo $_code ?>_cc_number" class="input-text required-entry"><?php echo $maskedToken; ?></label>
+
+                        <input type="text" onchange="valid_credit_card(value , '<?php echo $isTestMode; ?>', '<?php echo $siteName; ?>', '<?php echo $errorLogURL; ?>' , '<?php echo $this->getUrl('checkout/onepage/savePayment') ?>', '<?php echo $this->getUrl('checkout/onepage/saveOrder', array('form_key' => Mage::getSingleton('core/session')->getFormKey())) ?>', '<?php echo $this->getUrl('checkout/cart') ?>', 'guest')"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org'); blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="payment[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="<?php echo $maskedToken; ?>"  />
 
                     <?php } ?>
                     <input type="text" hidden  id="ccgateway_cc_number" name="payment[cc_number]" title="<?php echo $this->__('Credit Card Number') ?>" class="input-text"
@@ -304,7 +307,6 @@ if(Mage::getModel('ccgateway/standard')->getConfigData('active')==1){
                         <input type="text"  title="<?php echo $this->__('telephone') ?>" class="input-text required-entry" id="<?php echo $_code ?>_cc_telephone" name="payment[cc_telephone]" value=""  />
                     </div>
                 </li>
-
 
             </div>
 
