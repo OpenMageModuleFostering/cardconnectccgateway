@@ -61,6 +61,7 @@ if(Mage::getModel('ccgateway/standard')->getConfigData('active')==1){
     $billingCountry = $billingAddress->getCountryId();
     $billingPostCode = $billingAddress->getPostcode();
     $billingTelephone = $billingAddress->getTelephone();
+    $errorLogURL = Mage::getUrl('ccgateway/log/logfrontenderrors',array('_secure'=>true));
     ?>
 
     <ul id="payment_form_<?php echo $_code ?>" style="display:none">
@@ -88,7 +89,7 @@ if(Mage::getModel('ccgateway/standard')->getConfigData('active')==1){
                 <li class="wide">
                     <label for="<?php echo $_code ?>_cc_profile_name" class="required"><em>*</em><?php echo $this->__('Choose Your Card For Payment') ?></label>
                     <div class="input-box">
-                        <select id="payment[profile_name]" name="payment[profile_name]" onchange="javascript:return callGetProfileWebserviceController(<?php echo '\'' . $requestUrl . '\''; ?>, this.value);"  title="<?php echo $this->__('Select Your Card') ?>" class="required-entry validate-select">
+                        <select id="payment[profile_name]" name="payment[profile_name]" onchange="javascript:return callGetProfileWebserviceController(<?php echo '\'' . $requestUrl . '\''; ?>, this.value, <?php echo '\'' . $errorLogURL . '\''; ?> );"  title="<?php echo $this->__('Select Your Card') ?>" class="required-entry validate-select">
                             <option value=""><?php echo $this->__('--Please Select--') ?></option>
                             <?php foreach ($this->getCCProfileName() as $data): ?>
                                 <option value="<?php echo $data->getData('CC_PROFILEID'); ?>"
@@ -123,6 +124,7 @@ if(Mage::getModel('ccgateway/standard')->getConfigData('active')==1){
                     <label for="<?php echo $_code ?>_cc_type" class="required validate-cc-type "><em>*</em><?php echo $this->__('Credit Card Type') ?></label>
                     <div class="input-box" >
 
+
                         <select readonly id="ccgateway_cc_type" name="payment[cc_type]"  title="<?php echo $this->__('Credit Card Type') ?>" class="required-entry validate-select" onchange="resetcardinfo();">
                             <option value=""><?php echo $this->__('--Please Select--') ?></option>
                             <?php $accttype = (isset($response[0]['accttype'])) ? $response[0]['accttype'] : null;
@@ -140,10 +142,10 @@ if(Mage::getModel('ccgateway/standard')->getConfigData('active')==1){
                     <?php if ($this->hasCCProfile() == true) { ?>
                         <label id="cc_number_label" for="<?php echo $_code ?>_cc_number" class="input-text required-entry"><?php echo $maskedToken; ?></label>
 
-                            <input type="text" hidden onchange="valid_credit_card(value , '<?php echo $isTestMode; ?>', '<?php echo $siteName; ?>')"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org'); blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="payment[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="<?php echo $maskedToken; ?>"  />
+                            <input type="text" hidden onchange="valid_credit_card(value , '<?php echo $isTestMode; ?>', '<?php echo $siteName; ?>', '<?php echo $errorLogURL; ?>' )"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org'); blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="payment[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="<?php echo $maskedToken; ?>"  />
 
                         <?php } else { ?>
-                            <input type="text" onchange="valid_credit_card(value , '<?php echo $isTestMode; ?>', '<?php echo $siteName; ?>')"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org'); blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="payment[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="<?php echo $maskedToken; ?>"  />
+                            <input type="text" onchange="valid_credit_card(value , '<?php echo $isTestMode; ?>', '<?php echo $siteName; ?>', '<?php echo $errorLogURL; ?>')"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org'); blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="payment[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="<?php echo $maskedToken; ?>"  />
 
                     <?php } ?>
                     <input type="text" hidden  id="ccgateway_cc_number" name="payment[cc_number]" title="<?php echo $this->__('Credit Card Number') ?>" class="input-text"

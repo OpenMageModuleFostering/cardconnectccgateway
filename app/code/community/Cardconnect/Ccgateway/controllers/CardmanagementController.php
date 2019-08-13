@@ -78,7 +78,9 @@ class Cardconnect_Ccgateway_CardmanagementController extends Mage_Customer_Accou
             $response = Mage::getModel('ccgateway/standard')->createProfileService($data);
             if ($response['resptext'] == "Profile Saved") {
                 Mage::getSingleton('core/session')->addSuccess("Card has been added successfully.");
-            }else{
+            }else if ($response['resptext'] == "CardConnect_Timeout_Error"){
+                Mage::getSingleton('core/session')->addError(Mage::helper('ccgateway')->__("Unable to perform add card at this time. Please, retry."));
+            } else {
                 Mage::getSingleton('core/session')->addError(Mage::helper('ccgateway')->__("Unable to perform add card. Please, retry."));
             }
             $this->_redirect('customer/cardmanagement');
@@ -167,7 +169,7 @@ class Cardconnect_Ccgateway_CardmanagementController extends Mage_Customer_Accou
 
         // Call function Create Profile webservices
         $response = Mage::getModel('ccgateway/standard')->updateProfileService($param);
-	Mage::log($response, Zend_Log::ERR, "cc.log");
+	
         if ($response == "Profile Updated") {
             Mage::getSingleton('core/session')->addSuccess("Card has been updated successfully.");
         } else {
@@ -176,6 +178,4 @@ class Cardconnect_Ccgateway_CardmanagementController extends Mage_Customer_Accou
         $this->_redirect('customer/cardmanagement');
 
     }
-
-
 }

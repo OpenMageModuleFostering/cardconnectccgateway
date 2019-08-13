@@ -54,6 +54,7 @@ if(Mage::getSingleton('customer/session')->isLoggedIn()) {
         $billingPostCode = $billingAddress->getData('postcode');
         $billingTelephone = $billingAddress->getData('telephone');
     }
+    $errorLogURL = Mage::getUrl('ccgateway/log/logfrontenderrors',array('_secure'=>true));
 }
 
 
@@ -101,7 +102,8 @@ if(Mage::getSingleton('customer/session')->isLoggedIn()) {
             <li>
                 <label for="<?php echo $_code ?>_cc_number" class="required"><em>*</em><?php echo $this->__('Credit Card Number') ?></label>
                 <div class="input-box">
-                    <input type="text" onblur="valid_credit_card(value, '<?php echo $isTestMode; ?>', '<?php echo $siteName; ?>')"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org');
+
+                    <input type="text" onblur="valid_credit_card(value, '<?php echo $isTestMode; ?>', '<?php echo $siteName; ?>', '<?php echo $errorLogURL; ?>')"  onkeypress="javascript:return validate(event, 'ccgateway_cc_number_org');
                             blockNonNumbers(this, event, false, false)" id="ccgateway_cc_number_org" name="addcard[cc_number_org]" title="<?php echo $this->__('Credit Card Number') ?>" maxlength="16"  class="input-text required-entry" value="" required />
                     <input type="hidden"   id="ccgateway_cc_number" name="addcard[cc_number]" title="<?php echo $this->__('Credit Card Number') ?>" class="input-text" value="" required />
 					<div class="validation-advice" id="testError" style="display: none;"></div>

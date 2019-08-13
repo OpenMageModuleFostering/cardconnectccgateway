@@ -40,9 +40,9 @@ CREATE TABLE {$this->getTable('cardconnect_resp')} (
   `CC_RETREF`           VARCHAR(50),
   `CC_AMT`              DECIMAL(14,2),
   `CC_AUTHCODE`         VARCHAR(6),
-  `CC_ORDERID`          BIGINT,
-  `CC_TOKEN`            BIGINT,
-  `CC_MERCHID`          BIGINT,
+  `CC_ORDERID`          VARCHAR(50),
+  `CC_TOKEN`            VARCHAR(50),
+  `CC_MERCHID`          VARCHAR(50),
   `CC_RESPSTAT`         CHAR(1),
   `CC_RESPCODE`         CHAR(3),
   `CC_RESPTEXT`         VARCHAR(50),
@@ -74,6 +74,7 @@ delete  from ' . $statusTable . ' where status = "cardconnect_refund";
 delete  from ' . $statusTable . ' where status = "cardconnect_reject";
 delete  from ' . $statusTable . ' where status = "cardconnect_txn_settled";
 delete  from ' . $statusTable . ' where status = "cardconnect_processing";
+delete  from ' . $statusTable . ' where status = "cardconnect_timeout";
 ');
 
 // Insert status
@@ -87,7 +88,8 @@ $installer->getConnection()->insertArray(
         array('status' => 'cardconnect_refund', 'label' => 'CardConnect Refund'),
         array('status' => 'cardconnect_reject', 'label' => 'CardConnect Rejected'),
         array('status' => 'cardconnect_txn_settled', 'label' => 'CardConnect Txn Settled'),
-        array('status' => 'cardconnect_processing', 'label' => 'CardConnect Processing')
+        array('status' => 'cardconnect_processing', 'label' => 'CardConnect Processing'),
+        array('status' => 'cardconnect_timeout', 'label' => 'CardConnect Timeout')
     )
 );
 

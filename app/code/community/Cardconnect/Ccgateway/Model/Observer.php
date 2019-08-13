@@ -51,12 +51,17 @@ class Cardconnect_Ccgateway_Model_Observer
     public function implementOrderStatus($event)
     {
         $order = $event->getOrder();
+        if ($this->_getPaymentMethod($order) == 'ccgateway') {
+            $checkout_trans = Mage::getModel('ccgateway/standard')->getConfigData('checkout_trans', $order->getStoreId());
+            $checkoutType = Mage::getModel('ccgateway/standard')->getConfigData('checkout_type', $order->getStoreId());
 
-        $checkout_trans = Mage::getModel('ccgateway/standard')->getConfigData('checkout_trans', $order->getStoreId());
-        if ($checkout_trans == "authorize_capture") {
-            if ($this->_getPaymentMethod($order) == 'ccgateway') {
-                if ($order->canInvoice())
-                    $this->_processOrderStatus($order);
+            if ($checkoutType !== "tokenized_post") {
+                if ($checkout_trans == "authorize_capture") {
+                    if ($order->getState() == 'processing') {
+                        if ($order->canInvoice())
+                            $this->_processOrderStatus($order);
+                    }
+                }
             }
         }
 
@@ -77,19 +82,8 @@ class Cardconnect_Ccgateway_Model_Observer
             ->addObject($invoice->getOrder())
             ->save();
 
-        $invoice->sendEmail(true, '');
-        $this->_changeOrderStatus($order);
         return true;
     }
-
-    private function _changeOrderStatus($order)
-    {
-        $statusMessage = '';
-        $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, true);
-        $order->save();
-    }
-
-
 }
 
 

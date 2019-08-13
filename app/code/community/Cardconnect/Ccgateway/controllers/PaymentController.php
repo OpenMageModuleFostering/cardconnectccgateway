@@ -71,12 +71,20 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
             if ($checkoutType == "tokenized_post") {
                 $response = Mage::getModel('ccgateway/standard')->authService($order);
 
-                if($response['resptext']=="CardConnect_Error"){
+                if ($response['resptext'] == "CardConnect_Error") {
                     $errorMsg = "We are unable to perform the requested action, please contact customer service.";
                     $session = $this->_getCheckout();
                     $session->addError(Mage::helper('ccgateway')->__($errorMsg));
                     $this->_redirect('checkout/cart');
-                }else{
+                } else if ($response['resptext'] == "CardConnect_Timeout_Error") {
+                    $errorMsg = "We were unable to complete the requested operation at this time.  Please try again later or contact customer service.";
+                    $errorStat = "PPS62"; //PPS62 is for Timed Out error
+                    $this->responseCancel($errorStat);
+
+                    $session = $this->_getCheckout();
+                    $session->addError(Mage::helper('ccgateway')->__($errorMsg));
+                    $this->_redirect('checkout/cart');
+                } else {
                     $this->responseAction($response);
                 }
 
@@ -101,7 +109,12 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
         $cc_action = Mage::getModel('ccgateway/standard')->getConfigData('checkout_trans' , $order->getStoreId());
         $merchid = Mage::getModel('ccgateway/standard')->getConfigData('merchant' , $order->getStoreId());
 
-        $ccToken = "";
+        if (!empty($response['token'])){
+                $ccToken = $response['token'];
+        } else {
+            $ccToken ="";
+        }
+
 
         if ($this->getRequest()->isPost()) {
             $post = $this->getRequest()->getPost();
@@ -157,7 +170,7 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
             );
         }
 
-        if ($errorCode == 00) {
+        if ($errorCode === "00") {
             $statCVV = true;            // false = Failure, true = Success
             $statAVS = true;            // false = Failure, true = Success
             $voidOnAvs = Mage::getModel('ccgateway/standard')->getConfigData('void_avs' , $order->getStoreId());
@@ -189,14 +202,21 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
                     $this->responseCancel($errorStat);
                     // Set custom order status
                     $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_reject', $errorDesc)->save();
+                    $order->setData('canInvoice', false);
+                    $order->save();
                 }
             } else {
                 $this->saveResponseData2ccgateway($data);
                 $this->responseSuccess($orderId);
+
+                if ($cc_action == "authorize_capture") {
+                    if ($order->canInvoice())
+                        $this->_processOrderStatus($order);
+                }
                 // Set custom order status
                 $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_processing', $errorDesc)->save();
             }
-        } elseif ($errorCode == 02) {
+        } elseif ($errorCode === "02") {
             $errorStat = $response['respproc'] . $response['respcode'];
             $this->responseCancel($errorStat);
             $this->saveResponseData2ccgateway($data);
@@ -209,6 +229,18 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
             // Set custom order status
             $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_reject', $errorDesc)->save();
         }
+    }
+
+    private function _processOrderStatus($order)
+    {
+        $invoice = $order->prepareInvoice();
+        $invoice->register()->capture();
+        Mage::getModel('core/resource_transaction')
+            ->addObject($invoice)
+            ->addObject($invoice->getOrder())
+            ->save();
+
+        return true;
     }
 
     // Save date to CardConnect responce table    
@@ -272,21 +304,28 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
 
         $errorMsg = "";
         if ($errorStat == "CVV") {
-            $session->addError(Mage::helper('ccgateway')->__('Error - Invalid cvv , Please check cvv information,which is entered on payment page.'));
+            $session->addError(Mage::helper('ccgateway')->__('Error - Invalid payment information.  Please verify the payment information and try again.'));
             $errorMsg = "CVV does not match.";
-            Mage::log("Auto voided the transaction Due to CVV NO MATCH");
+            Mage::log("Auto voided the transaction Due to CVV NO MATCH.", Zend_Log::ERR , "cc.log");
         } elseif ($errorStat == "AVS") {
             $session->addError(Mage::helper('ccgateway')->__('Error - Please check billing information , try again.'));
             $errorMsg = "AVS does not match.";
-            Mage::log("Auto voided the transaction Due to AVS NO MATCH");
+            Mage::log("Auto voided the transaction Due to AVS NO MATCH.", Zend_Log::ERR , "cc.log");
+        } elseif ($errorStat == "PPS62") {
+            $errorMsg = "Timeout error response from CardConnect.";
+            Mage::log("Error - Order process is timed out , try again.", Zend_Log::ERR , "cc.log");
         } else {
             $errorMsg = Mage::helper('ccgateway')->matchResponseError($errorStat);
-            Mage:: log($errorStat . " :- " . $errorMsg);
+            Mage:: log($errorStat . " :- " . $errorMsg, Zend_Log::ERR , "cc.log");
             $session->addError(Mage::helper('ccgateway')->__($errorMsg));
         }
 
         // Set custom order status
-        $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_reject', $errorMsg)->save();
+        if ($errorStat == "PPS62") {
+        $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_timeout', $errorMsg)->save();
+        } else {
+            $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_reject', $errorMsg)->save();
+        }
 
         $this->_redirect('checkout/cart');
     }
@@ -343,5 +382,4 @@ class Cardconnect_Ccgateway_PaymentController extends Mage_Core_Controller_Front
         echo $response;
         exit;
     }
-
 }

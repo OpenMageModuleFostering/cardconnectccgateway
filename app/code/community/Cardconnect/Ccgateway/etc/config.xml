@@ -35,7 +35,7 @@ to license@magentocommerce.com so we can send you a copy immediately.
 <config>
     <modules>
         <Cardconnect_Ccgateway>
-            <version>1.0.7</version>
+            <version>1.0.8.6</version>
         </Cardconnect_Ccgateway>
     </modules>
     <global>
@@ -177,6 +177,27 @@ to license@magentocommerce.com so we can send you a copy immediately.
                     <pending_payment>
                         <statuses>
                             <cardconnect_capture/>
+                        </statuses>
+                        <visible_on_front>1</visible_on_front>
+                    </pending_payment>
+                </states>
+
+                <statuses>
+                    <cardconnect_timeout>
+                        <label>CardConnect Timeout</label>
+                        <description>CardConnect Timeout</description>
+                    </cardconnect_timeout>
+                </statuses>
+                <states>
+                    <cardconnect_timeout>
+                        <statuses>
+                            <cardconnect_timeout/>
+                        </statuses>
+                        <visible_on_front>1</visible_on_front>
+                    </cardconnect_timeout>
+                    <pending_payment>
+                        <statuses>
+                            <cardconnect_timeout/>
                         </statuses>
                         <visible_on_front>1</visible_on_front>
                     </pending_payment>

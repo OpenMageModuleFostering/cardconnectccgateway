@@ -78,7 +78,6 @@ class Cardconnect_Ccgateway_Adminhtml_Sales_Order_CreateController extends Mage_
                 $this->_getOrderCreateModel()->getQuote()->getPayment()->addData($paymentData);
             }
 
-
             $order = $this->_getOrderCreateModel()
                     ->setIsValidate(true)
                     ->importPostData($this->getRequest()->getPost('order'))
@@ -92,7 +91,6 @@ class Cardconnect_Ccgateway_Adminhtml_Sales_Order_CreateController extends Mage_
             if (!empty($order) && $payment_method_code == "ccgateway") {
                 $this->makeCcPayment($order);
             }
-
 
             if (Mage::getSingleton('admin/session')->isAllowed('sales/order/actions/view')) {
                 $this->_redirect('*/sales_order/view', array('order_id' => $order->getId()));
@@ -128,14 +126,25 @@ class Cardconnect_Ccgateway_Adminhtml_Sales_Order_CreateController extends Mage_
         $response = Mage::getModel('ccgateway/standard')->authService($order, $amount, "authFull");
         $errorStat = $response['respproc'] . $response['respcode'];
 
-        if($response['resptext']=="CardConnect_Error"){
+        if ($response['resptext'] == "CardConnect_Error") {
             // Cancel the order if authorization service fails
             Mage::helper('ccgateway')->cancelCcOrder($order);
             $errorMsg = Mage::helper('ccgateway')->matchResponseError($errorStat);
             // Set custom order status
             $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_reject', $errorMsg)->save();
             Mage::getSingleton('adminhtml/session')->addError(Mage::helper('ccgateway')->__('We are unable to perform the requested action, please contact customer service.'));
-        }else{
+
+        } else if ($response['resptext'] == "CardConnect_Timeout_Error") {
+            // Cancel the order if authorization service fails
+            Mage::helper('ccgateway')->cancelCcOrder($order);
+            $errorStat = "PPS62"; //PPS62 is for Timed Out error
+            $errorMsg = Mage::helper('ccgateway')->matchResponseError($errorStat);
+
+            // Set custom order status
+            $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_timeout', $errorMsg)->save();
+            Mage::getSingleton('adminhtml/session')->addError(Mage::helper('ccgateway')->__('We are unable to perform the requested action at this time, please contact customer service.'));
+
+        } else {
             $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_processing', 'Gateway has authorized the payment.');
             $autoVoidStatus = Mage::helper('ccgateway')->checkAutoVoidStatus($order, $response['avsresp'], $response['cvvresp']);
             if (($autoVoidStatus["STATUS_AVS"] && $autoVoidStatus["STATUS_CVV"]) == false) {
@@ -171,7 +180,4 @@ class Cardconnect_Ccgateway_Adminhtml_Sales_Order_CreateController extends Mage_
         }
 
     }
-
-
-
 }

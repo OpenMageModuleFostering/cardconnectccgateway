@@ -129,6 +129,9 @@ class CardConnectWebService
             curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
             curl_setopt($curl, CURLOPT_COOKIESESSION, 1);
+            curl_setopt($curl, CURLOPT_NOSIGNAL, 1);
+            curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 30);
+            curl_setopt($curl, CURLOPT_TIMEOUT, 30);
             curl_setopt($curl, CURLOPT_POSTFIELDS, $postString);
 
             $result = curl_exec($curl);

@@ -51,6 +51,8 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
     protected $_order;
     protected $_canCancelInvoice = true;
     protected $_canSaveCc = true;
+    protected $_cclength = 0;
+
 
     protected function _construct() {
         parent::_construct();
@@ -74,45 +76,6 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
         }
 
         return $_url;
-    }
-
-    /**
-     * Return webservices url type string
-     *
-     * @return string
-     */
-    public function getWebServicesUrl() {
-
-        $isTestMode = Mage::getModel('ccgateway/standard')->getConfigData('test_mode');
-        switch ($isTestMode) {
-            case 0:
-                $_webServicesUrl = 'https://fts.prinpay.com:8443/cardconnect/rest/';
-                break;
-            default:
-                $_webServicesUrl = 'https://fts.prinpay.com:6443/cardconnect/rest/';
-                break;
-        }
-
-        return $_webServicesUrl;
-    }
-    /**
-     * Return webservices url type string
-     *
-     * @return string
-     */
-    public function getCardSecureApiUrl() {
-
-        $isTestMode = Mage::getModel('ccgateway/standard')->getConfigData('test_mode');
-        switch ($isTestMode) {
-            case 0:
-                $_cardSecureApiUrl = "https://fts.prinpay.com:8443/cardsecure/cs";
-                break;
-            default:
-                $_cardSecureApiUrl = 'https://fts.prinpay.com:6443/cardsecure/cs';
-                break;
-        }
-
-        return $_cardSecureApiUrl;
     }
 
     /**
@@ -158,6 +121,10 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
 
     public function getOrderPlaceRedirectUrl() {
         return Mage::getUrl('ccgateway/payment/redirect');
+    }
+
+    public function getErrorlogUrl() {
+        return Mage::getUrl('ccgateway/log/logfrontenderrors');
     }
 
     /**
@@ -282,7 +249,13 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
     public function prepareSave() {
         $info = $this->getInfoInstance();
         if ($this->_canSaveCc) {
-            $info->setCcNumberEnc($info->encrypt($info->getCcNumber()));
+	    $_cclength = strlen($info->getCcNumber());
+            if (is_numeric($info->getCcNumber()) && $_cclength < 20) {
+                $info->setCcNumberEnc($info->encrypt($info->getCcNumber()));
+            } else  {
+		$info->setCcCidEnc($info->encrypt($info->getCcCid()));
+                return $this;
+            }
         }
 
         $info->setCcCidEnc($info->encrypt($info->getCcCid()));
@@ -291,10 +264,11 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
     }
 
     /** For Authorization * */
-    public function authService($order, $authAmount = "", $status = "") {
+    public function authService($order, $authAmount = "", $status = "")
+    {
 
         $orderId = $order->getIncrementId();
-        $merchid = $this->getConfigData('merchant' , $order->getStoreId());
+        $merchid = $this->getConfigData('merchant', $order->getStoreId());
 
         if (empty($status)) {
             $ccOwner = Mage::getSingleton('core/session')->getCcOwner();
@@ -305,7 +279,7 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
             $price = number_format($order->getBaseGrandTotal(), 2, '.', '');
             $profileId = Mage::getSingleton('core/session')->getCcProfileid();
         } else {
-            // For Pratial Shipment Reauthorization
+            // For Partial Shipment Reauthorization
             $quote_id = $order->getQuoteId();
             $collection = Mage::getModel('sales/quote_payment')->getCollection()
                 ->addFieldToFilter('quote_id', array('eq' => $quote_id));
@@ -313,9 +287,9 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
             foreach ($collection as $data) {
                 $ccOwner = $data->getData("cc_owner");
                 $ccType = $data->getData("cc_type");
-                $ccNumber = Mage::getModel('core/encryption')->decrypt($data->getData("cc_number_enc"));
+                $ccNumber = Mage::helper('core')->decrypt($data->getData("cc_number_enc"));
                 $ccExpiry = $data->getData("cc_exp_month") . substr($data->getData("cc_exp_year"), 2);
-                $ccCvv2 = Mage::getModel('core/encryption')->decrypt($data->getData("cc_cid_enc"));
+                $ccCvv2 = Mage::helper('core')->decrypt($data->getData("cc_cid_enc"));
             }
             $price = $authAmount;
         }
@@ -396,29 +370,70 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
 
                 // Save Partial Authorization Response data
                 $this->saveResponseData($response);
-                if($response['respcode']==00){
+                if ($response['respcode'] === "00") {
                     // Set custom order status
                     $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_processing', $response['resptext'])->save();
-                }else{
-                    $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_reject', $response['resptext'])->save();
-                    $response= array('resptext' => "CardConnect_Error");
+
+                    if ($checkout_trans == "authorize_capture") {
+                        if ($order->canInvoice())
+                            $this->_processOrderStatus($order);
+                    }
+                } else {
+                    Mage::log("CC Authorization Error because response is : " . json_encode($response), Zend_Log::ERR, "cc.log");
+
+                    $this->_cancelOrder($order);
+
+                    $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_reject', $response['resptext'])->save();
+                    $response = array('resptext' => "CardConnect_Error");
                 }
             }
         } else {
-            $myLogMessage = "CC Authorization : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
-            Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
+            $timeout = strpos($cc->getLastErrorMessage(), "errno=28");
+            if ($timeout !== false) {
+                $myLogMessage = "CC Authorization Timeout : " . __FILE__ . " @ " . __LINE__ . "  " . $cc->getLastErrorMessage();
+                Mage::log($myLogMessage, Zend_Log::ERR, "cc.log");
 
-            // Set custom order status
-            $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_reject', "Invalid response from CardConnect.")->save();
-            $response= array('resptext' => "CardConnect_Error");
+                // Note: State is updated and Order is canceled by PaymentController
+                $response = array('resptext' => "CardConnect_Timeout_Error");
+            } else {
+                $myLogMessage = "CC Authorization Error : " . __FILE__ . " @ " . __LINE__ . "  " . $cc->getLastErrorMessage();
+                Mage::log($myLogMessage, Zend_Log::ERR, "cc.log");
 
+                $this->_cancelOrder($order);
+
+                // Set custom order status
+                $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_reject', "Invalid response from CardConnect.")->save();
+                $response = array('resptext' => "CardConnect_Error");
+            }
         }
-
-
         return $response;
     }
 
+    private function _processOrderStatus($order)
+    {
+        $invoice = $order->prepareInvoice();
+        $invoice->register()->capture();
+        Mage::getModel('core/resource_transaction')
+            ->addObject($invoice)
+            ->addObject($invoice->getOrder())
+            ->save();
 
+        return true;
+    }
+
+    private function _cancelOrder($order)
+    {
+        // add order items back to inventory
+        $order->cancel();
+
+        // For each items in the orders, quantity invoiced should be set to zero
+        foreach ($order->getAllItems() as $item) {
+            $item->setData('qty_invoiced', 0);
+            $item->cancel();
+            $item->save();
+        }
+        $order->save();
+    }
 
     /** For capture * */
     public function capture(Varien_Object $payment, $amount) {
@@ -472,21 +487,57 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
                     // Save Capture Response data
                     $this->saveResponseData($response);
                     // Set custom order status
-                    $order->setState(Mage_Sales_Model_Order::STATE_PENDING_PAYMENT, 'cardconnect_capture', $response['setlstat'])->save();
+                    $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_capture', $response['setlstat'])->save();
                 }
             } else {
-                $myLogMessage = "CC Capture : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
-                Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
+                $timeout = strpos($cc->getLastErrorMessage(), "errno=28");
+                if($timeout !== false){
+                    $myLogMessage = "CC Capture Timeout : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
+                    Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
 
-                // Set custom order status
-                $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_reject', "Invalid response from CardConnect.")->save();
-                $errorMsg = "Unable to perform operation.  Please consult the Magento log for additional information.";
-                Mage::throwException($errorMsg);
+                    $order->setState($order->getState(), 'cardconnect_timeout', "Timeout error response on Capture from CardConnect.")->save();
 
+                    $this->_resetInvoice($order);
+
+                    $errorMsg = "Unable to perform operation at this time.  Please consult the Magento log for additional information.";
+                    Mage::throwException($errorMsg);
+                } else {
+                    $myLogMessage = "CC Capture Error : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
+                    Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
+
+                    $order->setState($order->getState(), 'cardconnect_reject', "Invalid response on Capture from CardConnect.")->save();
+
+                    $this->_resetInvoice($order);
+
+                    $errorMsg = "Unable to perform operation.  Please consult the Magento log for additional information.";
+                    Mage::throwException($errorMsg);
+                }
             }
         }
 
         return $this;
+    }
+
+    /** For resetting capture flags in case of error * */
+    private function _resetInvoice($order) {
+        // Reset invoice flag
+        $order->setActionFlag(Mage_Sales_Model_Order::ACTION_FLAG_CANCEL, false);
+        $order->setActionFlag(Mage_Sales_Model_Order::ACTION_FLAG_HOLD, false);
+        $order->setActionFlag(Mage_Sales_Model_Order::ACTION_FLAG_UNHOLD, false);
+        $order->setActionFlag(Mage_Sales_Model_Order::ACTION_FLAG_EDIT, false);
+        $order->setActionFlag(Mage_Sales_Model_Order::ACTION_FLAG_CREDITMEMO, false);
+        $order->setActionFlag(Mage_Sales_Model_Order::ACTION_FLAG_INVOICE, false);
+        $order->setActionFlag(Mage_Sales_Model_Order::ACTION_FLAG_REORDER, false);
+        $order->setActionFlag(Mage_Sales_Model_Order::ACTION_FLAG_SHIP, false);
+        $order->setActionFlag(Mage_Sales_Model_Order::ACTION_FLAG_COMMENT, false);
+        $order->setActionFlag(Mage_Sales_Model_Order::ACTION_FLAG_PRODUCTS_PERMISSION_DENIED, false);
+
+        // For each items in the orders, quantity invoiced should be set to zero
+        foreach ($order->getAllItems() as $item) {
+            $item->setData('qty_invoiced', 0);
+            $item->save();
+        }
+        $order->save();
     }
 
 // Check capture once performed for an order
@@ -540,21 +591,30 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
 
             if (empty($action)) {
                 // Set custom order status
-                $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_void', $response['resptext'])->save();
+                $order->setState($order->getState(), 'cardconnect_void', $response['resptext'])->save();
             }
+
+            return $response;
         } else {
-            $myLogMessage = "CC Void : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
-            Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
+            $timeout = strpos($cc->getLastErrorMessage(), "errno=28");
+            if($timeout !== false){
+                $myLogMessage = "CC Void Timeout : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
+                Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
 
-            // Set custom order status
-            $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_reject', "Invalid response from CardConnect.")->save();
+                $order->setState($order->getState(), 'cardconnect_timeout', "Timeout error response on Void from CardConnect.")->save();
 
-            $errorMsg = "Unable to perform operation.  Please consult the Magento log for additional information.";
-            Mage::throwException($errorMsg);
+                $errorMsg = "Unable to perform operation at this time.  Please consult the Magento log for additional information.";
+                Mage::throwException($errorMsg);
+            } else {
+                $myLogMessage = "CC Void Error : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
+                Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
 
+                $order->setState($order->getState(), 'cardconnect_reject', "Invalid response on Void from CardConnect.")->save();
+
+                $errorMsg = "Unable to perform operation.  Please consult the Magento log for additional information.";
+                Mage::throwException($errorMsg);
+            }
         }
-
-        return $response;
     }
 
 // Check the Capture status for a current order     
@@ -579,7 +639,7 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
         return $c_status;
     }
 
-// Check payment settlement satatus before refund  
+// Check payment settlement status before refund
 
     public function processBeforeRefund($invoice, $payment) {
         $order = $payment->getOrder();
@@ -596,7 +656,7 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
             Mage::log('Txn settled for your order Id: ' . $orderId);
         } else {
             $status = "false";
-            Mage::throwException("Refund cannot be processed, transaction should be settled first.");
+            Mage::log("Refund cannot be processed, transaction should be settled first.");
         }
 
         return $this;
@@ -641,16 +701,29 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
             // Save Refund Response data    
             $this->saveResponseData($response);
             // Set custom order status
-            $order->setState(Mage_Sales_Model_Order::STATE_PROCESSING, 'cardconnect_refund', $response['resptext'])->save();
+            if ($response['respcode'] == "00") {
+                $order->setState($order->getState(), 'cardconnect_refund', $response['resptext'])->save();
+            } else {
+                $order->setState(Mage_Sales_Model_Order::STATE_COMPLETE, 'cardconnect_reject', $response['resptext'])->save();
+            }
         } else {
+            $timeout = strpos($cc->getLastErrorMessage(), "errno=28");
+            if ($timeout !== false) {
+                $myLogMessage = "CC Refund Timeout : " . __FILE__ . " @ " . __LINE__ . "  " . $cc->getLastErrorMessage();
+                Mage::log($myLogMessage, Zend_Log::ERR, "cc.log");
 
-            $myLogMessage = "CC Refund : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
-            Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
+                $order->setState(Mage_Sales_Model_Order::STATE_COMPLETE, 'cardconnect_timeout', "Timeout error response on Refund from CardConnect.")->save();
+                $errorMsg = "Unable to perform operation at this time.  Please consult the Magento log for additional information.";
+                Mage::throwException($errorMsg);
+            } else {
+                $myLogMessage = "CC Refund Error : " . __FILE__ . " @ " . __LINE__ . "  " . $cc->getLastErrorMessage();
+                Mage::log($myLogMessage, Zend_Log::ERR, "cc.log");
 
-            // Set custom order status
-            $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_reject', "Invalid response from CardConnect.")->save();
-            $errorMsg = "Unable to perform operation.  Please consult the Magento log for additional information.";
-            Mage::throwException($errorMsg);
+                // Set custom order status
+                $order->setState(Mage_Sales_Model_Order::STATE_COMPLETE, 'cardconnect_reject', "Invalid response on Refund from CardConnect.")->save();
+                $errorMsg = "Unable to perform operation.  Please consult the Magento log for additional information.";
+                Mage::throwException($errorMsg);
+            }
 
         }
 
@@ -686,13 +759,14 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
                         if (abs($response['amount']) == $order_amount || abs($response['amount']) == '0.00') {
                             if ($response['setlstat'] == 'Accepted' || $response['setlstat'] == 'Voided') {
                                 if ($ccAction == 'Refund') {
-                                    $order->setState(Mage_Sales_Model_Order::STATE_REFUNDED, 'cardconnect_refund', $response['setlstat'])->save();
+
+                                    $order->setState($order->getState(), 'cardconnect_refund', $response['setlstat'])->save();
                                 }
                                 if ($ccAction == 'authorize' || $ccAction == 'authorize_capture') {
                                     if ($response['setlstat'] == 'Voided') {
                                         $order->setState(Mage_Sales_Model_Order::STATE_CANCELED, 'cardconnect_void', $response['setlstat'])->save();
                                     } else if ($response['setlstat'] == 'Accepted') {
-                                        $order->setState(Mage_Sales_Model_Order::STATE_COMPLETE, 'cardconnect_txn_settled', $response['setlstat'])->save();
+                                        $order->setState($order->getState(), 'cardconnect_txn_settled', $response['setlstat'])->save();
                                     }
                                 }
                                 if ($ccAction == 'Void') {
@@ -721,10 +795,23 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
                             }
                         }
                     } else {
-                        $errorMsg = 1;
-                        $myLogMessage = "CC Inquire : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
-                        Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
+                        $timeout = strpos($cc->getLastErrorMessage(), "errno=28");
+                        if ($timeout !== false) {
+                            $errorMsg = 2;
 
+                            $myLogMessage = "CC Inquire Timeout : " . __FILE__ . " @ " . __LINE__ . "  " . $cc->getLastErrorMessage();
+                            Mage::log($myLogMessage, Zend_Log::ERR, "cc.log");
+
+                            $order->setState($order->getState(), 'cardconnect_timeout', "Timeout error response on Inquire from CardConnect.")->save();
+                        }
+                        else {
+                            $errorMsg = 1;
+
+                            $myLogMessage = "CC Inquire Error : " . __FILE__ . " @ " . __LINE__ . "  " . $cc->getLastErrorMessage();
+                            Mage::log($myLogMessage, Zend_Log::ERR, "cc.log");
+
+                            // Note: We do not log inquire errors to transaction history
+                        }
                     }
                 }
             } else {
@@ -737,7 +824,10 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
         if ($message == "status matched") {
             $message = "Current status matched with Inquire status";
         } else if ($errorMsg == 1) {
-            $message = "There is some problem  in inquire services";
+            $message = "Error while attempting to determine latest transaction status (Inquire)";
+        } else if ($errorMsg == 2) {
+            // For timeout in inquire
+            $message = "Unable to perform operation at this time.  Please consult the Magento log for additional information.";
         } else {
             $message = "Successfully Inquired";
         }
@@ -790,13 +880,22 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
                     $response['defaultacct'] = "Y";
                 }
 
-                // Save Refund Response data    
+                // Save Response data
                 $this->saveResponseData($response, "Wallat");
             }
         } else {
-            $myLogMessage = "CC Create Profile Service : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
-            Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
-            $response= array('resptext' => "CardConnect_Error");
+            $timeout = strpos($cc->getLastErrorMessage(), "errno=28");
+            if ($timeout !== false) {
+                $myLogMessage = "CC Create Profile Service Timeout : " . __FILE__ . " @ " . __LINE__ . "  " . $cc->getLastErrorMessage();
+                Mage::log($myLogMessage, Zend_Log::ERR, "cc.log");
+
+                $response = array('resptext' => "CardConnect_Timeout_Error");
+            } else {
+                $myLogMessage = "CC Create Profile Service Error : " . __FILE__ . " @ " . __LINE__ . "  " . $cc->getLastErrorMessage();
+                Mage::log($myLogMessage, Zend_Log::ERR, "cc.log");
+
+                $response = array('resptext' => "CardConnect_Error");
+            }
         }
 
         return $response;
@@ -818,10 +917,16 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
             $resp = json_decode($resp, true);
             $resp[] = $rsCard['CC_CARD_NAME'];
         } else {
-            $myLogMessage = "CC Get Profile Service : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
-            Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
-            $resp[] = array('resptext' => "CardConnect_Error");
+            $timeout = strpos($cc->getLastErrorMessage(), "errno=28");
+            if ($timeout !== false) {
+                $myLogMessage = "CC Get Profile Service Timeout : " . __FILE__ . " @ " . __LINE__ . "  " . $cc->getLastErrorMessage();
+            }
+            else {
+                $myLogMessage = "CC Get Profile Service Error : " . __FILE__ . " @ " . __LINE__ . "  " . $cc->getLastErrorMessage();
+            }
+            Mage::log($myLogMessage, Zend_Log::ERR, "cc.log");
 
+            $resp[] = array('resptext' => "CardConnect_Error");
         }
 
         return $resp;
@@ -833,8 +938,15 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
         $cc = Mage::helper('ccgateway')->getCardConnectWebService();
         $resp = $cc->getProfileService($profileId);
         if (empty($resp)) {
-            $myLogMessage = "CC Get Profile Service : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
-            Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
+            $timeout = strpos($cc->getLastErrorMessage(), "errno=28");
+            if ($timeout !== false) {
+                $myLogMessage = "CC Get Profile Service Timeout : " . __FILE__ . " @ " . __LINE__ . "  " . $cc->getLastErrorMessage();
+            }
+            else {
+                $myLogMessage = "CC Get Profile Service Error : " . __FILE__ . " @ " . __LINE__ . "  " . $cc->getLastErrorMessage();
+            }
+            Mage::log($myLogMessage, Zend_Log::ERR, "cc.log");
+
             $resp[] = array('resptext' => "CardConnect_Error");
         }
 
@@ -883,17 +995,25 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
                     $msg = "We are unable to perform the requested action, please contact customer service.";
                     $myLogMessage = "CC Delete Profile Service : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
                     Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
+
                     $myMessage = "CC Delete Profile Service : ". __FILE__ . " @ " . __LINE__ ."  ".$response['resptext'];
                     Mage::log($myMessage, Zend_Log::ERR , "cc.log" );
                 }
             } else {
-                $myLogMessage = "CC Delete Profile Service : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
-                Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
+                $timeout = strpos($cc->getLastErrorMessage(), "errno=28");
+                if ($timeout !== false) {
+                    $myLogMessage = "CC Delete Profile Service Timeout : " . __FILE__ . " @ " . __LINE__ . "  " . $cc->getLastErrorMessage();
+                }
+                else {
+                    $myLogMessage = "CC Delete Profile Service Error : " . __FILE__ . " @ " . __LINE__ . "  " . $cc->getLastErrorMessage();
+                }
+                Mage::log($myLogMessage, Zend_Log::ERR, "cc.log");
+
                 $msg = "We are unable to perform the requested action, please contact customer service.";
             }
-        }else{
-            $myLogMessage = "CC Delete Profile Service : ". __FILE__ . " @ " . __LINE__;
-            Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
+        } else {
+            $myLogMessage = "CC Delete Profile Service : " . __FILE__ . " @ " . __LINE__;
+            Mage::log($myLogMessage, Zend_Log::ERR, "cc.log");
             $msg = "We are unable to perform the requested action, please contact customer service.";
         }
 
@@ -953,10 +1073,15 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
                 Mage::log($errorMessage, Zend_Log::ERR, "cc.log");
             }
         } else {
-            $myLogMessage = "CC Update Profile Service : ". __FILE__ . " @ " . __LINE__ ."  ".$cc->getLastErrorMessage();
-            Mage::log($myLogMessage, Zend_Log::ERR , "cc.log" );
+            $timeout = strpos($cc->getLastErrorMessage(), "errno=28");
+            if ($timeout !== false) {
+                $myLogMessage = "CC Update Profile Service Timeout : " . __FILE__ . " @ " . __LINE__ . "  " . $cc->getLastErrorMessage();
+            }
+            else {
+                $myLogMessage = "CC Update Profile Service Error : " . __FILE__ . " @ " . __LINE__ . "  " . $cc->getLastErrorMessage();
+            }
+            Mage::log($myLogMessage, Zend_Log::ERR, "cc.log");
         }
-
 
         return $response;
     }
@@ -1027,7 +1152,12 @@ class Cardconnect_Ccgateway_Model_Standard extends Mage_Payment_Model_Method_Abs
         } else {
             $retref = $response['retref'];
             // $ccToken = @$response['token'];
-            $ccToken ="";
+	    if (!empty($response['token'])){
+                $ccToken = @$response['token'];
+            } else {
+		$ccToken ="";
+            }
+
 
             $data = array('CC_ACTION' => $response['action'], 			/* Checkout Transaction Type */
                 'CC_RETREF' => "$retref", 								/* Retrieval Reference Number */
