@@ -1,16 +1,19 @@
 {
-    "name": "OpenMageModuleFostering/CardconnectCcgateway",
+    "name": "OpenMageModuleFostering\/CardconnectCcgateway",
     "type": "magento-module",
     "license": "OSL-v3.0",
     "homepage": "",
     "description": "Extension provides the ability for merchants to process through the CardConnect Gateway. ",
     "authors": [
-    {
-        "name": "AgileNova",
-        "email": "matt.wixson@agilenova.com"
-    }
-],
+        {
+            "name": "AgileNova",
+            "email": "matt.wixson@agilenova.com"
+        }
+    ],
     "suggest": {
-        "magento-hackathon/magento-composer-installer": "*"
-    }
+        "magento-hackathon\/magento-composer-installer": "*"
+    },
+    "keywords": [
+        "openmage-module"
+    ]
 }
